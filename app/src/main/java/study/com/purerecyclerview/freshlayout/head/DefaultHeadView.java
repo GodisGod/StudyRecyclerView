@@ -1,42 +1,39 @@
-package study.com.purerecyclerview.freshlayout;
+package study.com.purerecyclerview.freshlayout.head;
 
 import android.content.Context;
+import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import study.com.purerecyclerview.R;
+import study.com.purerecyclerview.freshlayout.HeadView;
 
 /**
- * Created by  HONGDA on 2018/12/17.
+ * Created by  HONGDA on 2018/12/19.
  */
-public class HeadRefreshView extends FrameLayout implements HeadView {
-
+public class DefaultHeadView extends LinearLayout implements HeadView {
     private TextView tvTip;
     private ImageView arrow;
     private ProgressBar progressBar;
 
-    public HeadRefreshView(Context context) {
+    public DefaultHeadView(Context context) {
         this(context, null);
     }
 
-    public HeadRefreshView(Context context, AttributeSet attrs) {
+    public DefaultHeadView(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public HeadRefreshView(Context context, AttributeSet attrs, int defStyleAttr) {
+    public DefaultHeadView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        init(context);
-    }
-
-    private void init(Context context) {
-        Log.i("LHD", "HeadRefreshView  init");
-        View view = LayoutInflater.from(context).inflate(R.layout.layout_header, null);
+        Log.i("LHD", "DefaultHeadView  init");
+        View view = LayoutInflater.from(context).inflate(R.layout.layout_default_header, null);
         addView(view);
         tvTip = (TextView) view.findViewById(R.id.header_tv);
         arrow = (ImageView) view.findViewById(R.id.header_arrow);

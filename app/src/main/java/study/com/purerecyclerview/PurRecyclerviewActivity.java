@@ -10,12 +10,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import study.com.purerecyclerview.freshlayout.BaseRefreshListener;
-import study.com.purerecyclerview.freshlayout.PureRefreshLayout;
+import study.com.purerecyclerview.freshlayout.layout.PureRefreshLayout;
 import study.com.purerecyclerview.freshlayout.adapter.RecyclerViewAdapter;
+import study.com.purerecyclerview.freshlayout.layout.PureRefreshLayout2;
 
 public class PurRecyclerviewActivity extends AppCompatActivity {
 
-    private PureRefreshLayout pullToRefreshLayout;
+    private PureRefreshLayout2 pullToRefreshLayout;
     private RecyclerView recyclerView;
     private RecyclerViewAdapter adapter;
     private List<String> list;

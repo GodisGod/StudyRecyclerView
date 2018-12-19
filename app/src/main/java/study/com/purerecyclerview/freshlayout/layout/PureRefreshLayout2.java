@@ -1,12 +1,11 @@
-package study.com.purerecyclerview.freshlayout;
+package study.com.purerecyclerview.freshlayout.layout;
 
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.support.v4.view.ViewCompat;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -15,12 +14,23 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
 import study.com.purerecyclerview.R;
+import study.com.purerecyclerview.freshlayout.BaseRefreshListener;
+import study.com.purerecyclerview.freshlayout.FooterView;
+import study.com.purerecyclerview.freshlayout.HeadRefreshView;
+import study.com.purerecyclerview.freshlayout.HeadView;
+import study.com.purerecyclerview.freshlayout.LoadMoreView;
+import study.com.purerecyclerview.freshlayout.State;
+import study.com.purerecyclerview.freshlayout.ViewStatus;
+import study.com.purerecyclerview.freshlayout.head.DefaultHeadView;
 import study.com.purerecyclerview.util.DisplayUtil;
 
 /**
  * Created by  HONGDA on 2018/12/17.
+ * 头部有两个方案
+ * 1、根据下拉距离动态改变头部高度
+ * 2、将布局放到屏幕之外，根据下拉距离滑动到屏幕内部
  */
-public class PureRefreshLayout extends FrameLayout {
+public class PureRefreshLayout2 extends FrameLayout {
 
     private HeadView headView;
     private FooterView footerView;
@@ -51,15 +61,15 @@ public class PureRefreshLayout extends FrameLayout {
     private View loadingView, errorView, emptyView;
     private int loading = R.layout.layout_loading, empty = R.layout.layout_empty, error = R.layout.layout_error;
 
-    public PureRefreshLayout(Context context) {
+    public PureRefreshLayout2(Context context) {
         this(context, null);
     }
 
-    public PureRefreshLayout(Context context, AttributeSet attrs) {
+    public PureRefreshLayout2(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public PureRefreshLayout(Context context, AttributeSet attrs, int defStyleAttr) {
+    public PureRefreshLayout2(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
 
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.PullToRefreshLayout, defStyleAttr, 0);
@@ -78,6 +88,7 @@ public class PureRefreshLayout extends FrameLayout {
         if (getChildCount() != 1) {
             new IllegalArgumentException("must only one child");
         }
+        Log.i("LHD", "head_height = " + head_height + "   head_height_2 = " + head_height_2);
     }
 
     @Override
@@ -95,8 +106,13 @@ public class PureRefreshLayout extends FrameLayout {
         } else {
             removeView(headView.getView());
         }
-        LayoutParams lp = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0);
-        headView.getView().setLayoutParams(lp);
+
+        Log.i("LHD", "addHeadView = addHeadView = " + head_height + "   head_height_2 = " + head_height_2);
+        //头部方案2
+        LayoutParams layoutParams = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, head_height);
+        layoutParams.topMargin = -head_height;
+        headView.getView().setLayoutParams(layoutParams);
+
         if (headView.getView().getParent() != null) {
             ((ViewGroup) headView.getView().getParent()).removeAllViews();
         }
@@ -157,7 +173,14 @@ public class PureRefreshLayout extends FrameLayout {
                 if (dura > 0 && canRefresh) {
                     dura = Math.min(head_height_2, dura);
                     dura = Math.max(0, dura);
-                    headView.getView().getLayoutParams().height = (int) dura;
+                    //头部方案2
+                    //将布局放到屏幕之外，根据下拉距离滑动到屏幕内部
+                    LayoutParams layoutParams = (LayoutParams) headView.getView().getLayoutParams();
+                    Log.i("LHD", "位移距离 ：" + dura);
+                    Log.i("LHD", "(-head_height+dura = " + (-head_height + dura));
+                    layoutParams.topMargin = (int) (-head_height + dura);
+                    headView.getView().setLayoutParams(layoutParams);
+                    //同步向下移动recyclerview
                     ViewCompat.setTranslationY(childView, dura);
                     requestLayout();
                     headView.progress(dura, head_height);
@@ -246,9 +269,14 @@ public class PureRefreshLayout extends FrameLayout {
             public void onAnimationUpdate(ValueAnimator valueAnimator) {
                 int value = (int) valueAnimator.getAnimatedValue();
                 if (state == State.REFRESH) {
-                    headView.getView().getLayoutParams().height = value;
+                    Log.i("LHD", "动画 value = " + value + "   purpose = " + purpose);
+                    LayoutParams layoutParams = (LayoutParams) headView.getView().getLayoutParams();
+                    layoutParams.topMargin = -head_height + value;
+                    headView.getView().setLayoutParams(layoutParams);
                     ViewCompat.setTranslationY(childView, value);
                     if (purpose == 0) { //代表结束加载
+                        layoutParams.topMargin = -head_height + value;
+                        headView.getView().setLayoutParams(layoutParams);
                         headView.finishing(value, head_height_2);
                     } else {
                         headView.progress(value, head_height);
@@ -267,8 +295,6 @@ public class PureRefreshLayout extends FrameLayout {
                         callBack.onSuccess();
                 }
                 requestLayout();
-
-
             }
 
         });
@@ -285,7 +311,6 @@ public class PureRefreshLayout extends FrameLayout {
                 if (state == State.REFRESH) {
                     isRefresh = false;
                     headView.normal();
-
                 } else {
                     isLoadMore = false;
                     footerView.normal();
@@ -296,7 +321,9 @@ public class PureRefreshLayout extends FrameLayout {
 
     private void setFinish(@State.REFRESH_STATE int state) {
         if (state == State.REFRESH) {
-            if (headView != null && headView.getView().getLayoutParams().height > 0 && isRefresh) {
+            FrameLayout.LayoutParams layoutParams = (LayoutParams) headView.getView().getLayoutParams();
+            Log.i("LHD", "finish = " + layoutParams.topMargin);
+            if (headView != null && layoutParams.topMargin == 0 && isRefresh) {
                 setFinish(head_height, state);
             }
         } else {
