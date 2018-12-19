@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="60dp"
-    android:background="#afa"
+    android:layout_height="@dimen/head_height"
     android:orientation="horizontal">
+
     <LinearLayout
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
+        android:gravity="center"
         android:orientation="horizontal">
 
         <ProgressBar
@@ -31,10 +32,9 @@
             android:id="@+id/header_tv"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_centerHorizontal="true"
-            android:layout_centerVertical="true"
-            android:layout_gravity="center"
+            android:layout_gravity="center_vertical"
             android:text="下拉刷新"
             android:textSize="14sp" />
     </LinearLayout>
+
 </FrameLayout>

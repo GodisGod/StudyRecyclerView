@@ -16,7 +16,6 @@ import android.widget.FrameLayout;
 import study.com.purerecyclerview.R;
 import study.com.purerecyclerview.freshlayout.BaseRefreshListener;
 import study.com.purerecyclerview.freshlayout.FooterView;
-import study.com.purerecyclerview.freshlayout.HeadRefreshView;
 import study.com.purerecyclerview.freshlayout.HeadView;
 import study.com.purerecyclerview.freshlayout.LoadMoreView;
 import study.com.purerecyclerview.freshlayout.State;
@@ -41,9 +40,9 @@ public class PureRefreshLayout2 extends FrameLayout {
     private static int FOOT_HEIGHT = 60;
 
     private static int head_height;
-    private static int head_height_2;
+    private static int head_height_max;//最大滑动距离
     private static int foot_height;
-    private static int foot_height_2;
+    private static int foot_height_max;//最大滑动距离
 
     private float mTouchY;
     private float mCurrentY;
@@ -55,6 +54,7 @@ public class PureRefreshLayout2 extends FrameLayout {
 
     //滑动的最小距离
     private int mTouchSlope;
+    private float ratio = 3.0f;//滑动距离和头部view下拉高度的比率，默认是3
 
     private BaseRefreshListener refreshListener;
 
@@ -81,14 +81,16 @@ public class PureRefreshLayout2 extends FrameLayout {
     }
 
     private void init() {
+        float height = getResources().getDimension(R.dimen.head_height);
+        Log.i("LHD", "dimen height = " + height);
         head_height = DisplayUtil.dp2Px(getContext(), HEAD_HEIGHT);
         foot_height = DisplayUtil.dp2Px(getContext(), FOOT_HEIGHT);
-        head_height_2 = DisplayUtil.dp2Px(getContext(), HEAD_HEIGHT * 2);
-        foot_height_2 = DisplayUtil.dp2Px(getContext(), FOOT_HEIGHT * 2);
+        head_height_max = DisplayUtil.dp2Px(getContext(), HEAD_HEIGHT * 2);
+        foot_height_max = DisplayUtil.dp2Px(getContext(), FOOT_HEIGHT * 2);
         if (getChildCount() != 1) {
             new IllegalArgumentException("must only one child");
         }
-        Log.i("LHD", "head_height = " + head_height + "   head_height_2 = " + head_height_2);
+        Log.i("LHD", "head_height = " + head_height + "   head_height_max = " + head_height_max);
     }
 
     @Override
@@ -102,13 +104,12 @@ public class PureRefreshLayout2 extends FrameLayout {
     private void addHeadView() {
         //防止重复添加
         if (headView == null) {
-            headView = new HeadRefreshView(getContext());
+            headView = new DefaultHeadView(getContext());
         } else {
             removeView(headView.getView());
         }
 
-        Log.i("LHD", "addHeadView = addHeadView = " + head_height + "   head_height_2 = " + head_height_2);
-        //头部方案2
+        //头部方案2:使用marginTop控制头部view
         LayoutParams layoutParams = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, head_height);
         layoutParams.topMargin = -head_height;
         headView.getView().setLayoutParams(layoutParams);
@@ -147,6 +148,7 @@ public class PureRefreshLayout2 extends FrameLayout {
                 float dy = currentY - mCurrentY;
                 if (canRefresh) {
                     boolean canChildScrollUp = canChildScrollUp();
+                    //如果滑动距离超过最小滑动距离并且RecyclerView不能继续滚动，则拦截触摸事件，此时触摸事件由layout处理，而不会传递给RecyclerView
                     if (dy > mTouchSlope && !canChildScrollUp) {
                         headView.begin();
                         return true;
@@ -169,15 +171,15 @@ public class PureRefreshLayout2 extends FrameLayout {
         switch (event.getAction()) {
             case MotionEvent.ACTION_MOVE:
                 mCurrentY = event.getY();
-                float dura = (mCurrentY - mTouchY) / 3.0f;
+                float dura = (mCurrentY - mTouchY) / ratio;
+                //dura >0 表示是向下滑动即下拉  < 0 表示是向上滑动即上拉
                 if (dura > 0 && canRefresh) {
-                    dura = Math.min(head_height_2, dura);
-                    dura = Math.max(0, dura);
+                    dura = Math.min(head_height_max, dura);//滑动的最大距离是head_height_max
+                    dura = Math.max(0, dura);//todo
                     //头部方案2
                     //将布局放到屏幕之外，根据下拉距离滑动到屏幕内部
                     LayoutParams layoutParams = (LayoutParams) headView.getView().getLayoutParams();
-                    Log.i("LHD", "位移距离 ：" + dura);
-                    Log.i("LHD", "(-head_height+dura = " + (-head_height + dura));
+                    Log.i("LHD", "位移距离 ：" + dura + "   (-head_height+dura = " + (-head_height + dura));
                     layoutParams.topMargin = (int) (-head_height + dura);
                     headView.getView().setLayoutParams(layoutParams);
                     //同步向下移动recyclerview
@@ -186,7 +188,7 @@ public class PureRefreshLayout2 extends FrameLayout {
                     headView.progress(dura, head_height);
                 } else {
                     if (canLoadMore) {
-                        dura = Math.min(foot_height_2, Math.abs(dura));
+                        dura = Math.min(foot_height_max, Math.abs(dura));
                         dura = Math.max(0, Math.abs(dura));
                         footerView.getView().getLayoutParams().height = (int) dura;
                         ViewCompat.setTranslationY(childView, -dura);
@@ -200,27 +202,29 @@ public class PureRefreshLayout2 extends FrameLayout {
                 float currentY = event.getY();
                 final int dy1 = (int) (currentY - mTouchY) / 3;
                 if (dy1 > 0 && canRefresh) {
-                    if (dy1 >= head_height) {
-                        createAnimatorTranslationY(State.REFRESH,
-                                dy1 > head_height_2 ? head_height_2 : dy1, head_height,
-                                new CallBack() {
-                                    @Override
-                                    public void onSuccess() {
-                                        isRefresh = true;
-                                        if (refreshListener != null) {
-                                            refreshListener.refresh();
-                                        }
-                                        headView.loading();
-                                    }
-                                });
-                    } else if (dy1 > 0 && dy1 < head_height) {
+                    if (dy1 >= head_height) {//超过刷新距离，释放后要进入刷新状态，此时头部高度要固定为head_height
+                        //最大滑动距离是head_height_max
+                        int start = dy1 > head_height_max ? head_height_max : dy1;
+                        //从最大距离松手到刷新的动画
+                        createAnimatorTranslationY(State.REFRESH, start, head_height, new CallBack() {
+                            @Override
+                            public void onSuccess() {
+                                isRefresh = true;//刷新中
+                                if (refreshListener != null) {
+                                    refreshListener.refresh();
+                                }
+                                headView.loading();//改变headView的状态
+                            }
+                        });
+                    } else {//没超过刷新距离则不刷新
                         setFinish(dy1, State.REFRESH);
                         headView.normal();
                     }
                 } else {
                     if (canLoadMore) {
                         if (Math.abs(dy1) >= foot_height) {
-                            createAnimatorTranslationY(State.LOADMORE, Math.abs(dy1) > foot_height_2 ? foot_height_2 : Math.abs(dy1), foot_height, new CallBack() {
+                            int start = Math.abs(dy1) > foot_height_max ? foot_height_max : Math.abs(dy1);
+                            createAnimatorTranslationY(State.LOADMORE, start, foot_height, new CallBack() {
                                 @Override
                                 public void onSuccess() {
                                     isLoadMore = true;
@@ -241,14 +245,11 @@ public class PureRefreshLayout2 extends FrameLayout {
         return super.onTouchEvent(event);
     }
 
-
-    private boolean canChildScrollDown() {
-        if (childView == null) {
-            return false;
-        }
-        return ViewCompat.canScrollVertically(childView, 1);
-    }
-
+    /**
+     * 判断RecyclerView是否可以继续向下滚动
+     *
+     * @return
+     */
     private boolean canChildScrollUp() {
         if (childView == null) {
             return false;
@@ -257,40 +258,50 @@ public class PureRefreshLayout2 extends FrameLayout {
     }
 
     /**
+     * 判断RecyclerView是否可以继续向上滚动
+     *
+     * @return
+     */
+    private boolean canChildScrollDown() {
+        if (childView == null) {
+            return false;
+        }
+        return ViewCompat.canScrollVertically(childView, 1);
+    }
+
+    /**
      * 创建动画
      */
     public void createAnimatorTranslationY(@State.REFRESH_STATE final int state, final int start,
-                                           final int purpose, final CallBack callBack) {
+                                           final int end, final CallBack callBack) {
         final ValueAnimator anim;
-        anim = ValueAnimator.ofInt(start, purpose);
+        anim = ValueAnimator.ofInt(start, end);
         anim.setDuration(ANIM_TIME);
         anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
             public void onAnimationUpdate(ValueAnimator valueAnimator) {
                 int value = (int) valueAnimator.getAnimatedValue();
                 if (state == State.REFRESH) {
-                    Log.i("LHD", "动画 value = " + value + "   purpose = " + purpose);
+                    Log.i("LHD", "动画 value = " + value + "   purpose = " + end);
                     LayoutParams layoutParams = (LayoutParams) headView.getView().getLayoutParams();
                     layoutParams.topMargin = -head_height + value;
                     headView.getView().setLayoutParams(layoutParams);
                     ViewCompat.setTranslationY(childView, value);
-                    if (purpose == 0) { //代表结束加载
-                        layoutParams.topMargin = -head_height + value;
-                        headView.getView().setLayoutParams(layoutParams);
-                        headView.finishing(value, head_height_2);
+                    if (end == 0) { //代表结束加载
+                        headView.finishing(value, head_height_max);
                     } else {
                         headView.progress(value, head_height);
                     }
                 } else {
                     footerView.getView().getLayoutParams().height = value;
                     ViewCompat.setTranslationY(childView, -value);
-                    if (purpose == 0) { //代表结束加载
-                        footerView.finishing(value, head_height_2);
+                    if (end == 0) { //代表结束加载
+                        footerView.finishing(value, head_height_max);
                     } else {
                         footerView.progress(value, foot_height);
                     }
                 }
-                if (value == purpose) {
+                if (value == end) {
                     if (callBack != null)
                         callBack.onSuccess();
                 }
@@ -304,8 +315,8 @@ public class PureRefreshLayout2 extends FrameLayout {
     /**
      * 结束下拉刷新
      */
-    private void setFinish(int height, @State.REFRESH_STATE final int state) {
-        createAnimatorTranslationY(state, height, 0, new CallBack() {
+    private void setFinish(int start, @State.REFRESH_STATE final int state) {
+        createAnimatorTranslationY(state, start, 0, new CallBack() {
             @Override
             public void onSuccess() {
                 if (state == State.REFRESH) {
@@ -340,7 +351,6 @@ public class PureRefreshLayout2 extends FrameLayout {
     public void setRefreshListener(BaseRefreshListener refreshListener) {
         this.refreshListener = refreshListener;
     }
-
 
     private void showLoadingView() {
         if (loadingView == null) {
@@ -556,7 +566,7 @@ public class PureRefreshLayout2 extends FrameLayout {
         if (head_height >= DisplayUtil.dp2Px(getContext(), dp)) {
             return;
         }
-        head_height_2 = DisplayUtil.dp2Px(getContext(), dp);
+        head_height_max = DisplayUtil.dp2Px(getContext(), dp);
     }
 
     /**
@@ -568,7 +578,7 @@ public class PureRefreshLayout2 extends FrameLayout {
         if (foot_height >= DisplayUtil.dp2Px(getContext(), dp)) {
             return;
         }
-        foot_height_2 = DisplayUtil.dp2Px(getContext(), dp);
+        foot_height_max = DisplayUtil.dp2Px(getContext(), dp);
     }
 
     /**
@@ -583,8 +593,8 @@ public class PureRefreshLayout2 extends FrameLayout {
         if (foot_height >= DisplayUtil.dp2Px(getContext(), dp)) {
             return;
         }
-        head_height_2 = DisplayUtil.dp2Px(getContext(), dp);
-        foot_height_2 = DisplayUtil.dp2Px(getContext(), dp);
+        head_height_max = DisplayUtil.dp2Px(getContext(), dp);
+        foot_height_max = DisplayUtil.dp2Px(getContext(), dp);
     }
 
     /**
@@ -600,8 +610,8 @@ public class PureRefreshLayout2 extends FrameLayout {
         if (foot_height >= DisplayUtil.dp2Px(getContext(), loadMore)) {
             return;
         }
-        head_height_2 = DisplayUtil.dp2Px(getContext(), refresh);
-        foot_height_2 = DisplayUtil.dp2Px(getContext(), loadMore);
+        head_height_max = DisplayUtil.dp2Px(getContext(), refresh);
+        foot_height_max = DisplayUtil.dp2Px(getContext(), loadMore);
     }
 
 

@@ -6,6 +6,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ProgressBar;
@@ -17,7 +18,7 @@ import study.com.purerecyclerview.freshlayout.HeadView;
 /**
  * Created by  HONGDA on 2018/12/19.
  */
-public class DefaultHeadView extends LinearLayout implements HeadView {
+public class DefaultHeadView extends FrameLayout implements HeadView {
     private TextView tvTip;
     private ImageView arrow;
     private ProgressBar progressBar;
@@ -48,15 +49,12 @@ public class DefaultHeadView extends LinearLayout implements HeadView {
     @Override
     public void progress(float progress, float all) {
         float s = progress / all;
-        if (s >= 0.9f) {
+        if (progress >= all) {
+            tvTip.setText("松开刷新");
             arrow.setRotation(180);
         } else {
-            arrow.setRotation(0);
-        }
-        if (progress >= all - 10) {
-            tvTip.setText("松开刷新");
-        } else {
             tvTip.setText("下拉加载");
+            arrow.setRotation(0);
         }
     }
 

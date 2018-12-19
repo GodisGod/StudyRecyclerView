@@ -16,22 +16,21 @@ import study.com.purerecyclerview.R;
 import study.com.purerecyclerview.freshlayout.BaseRefreshListener;
 import study.com.purerecyclerview.freshlayout.FooterView;
 import study.com.purerecyclerview.freshlayout.HeadRefreshView;
-import study.com.purerecyclerview.freshlayout.HeadView;
 import study.com.purerecyclerview.freshlayout.LoadMoreView;
 import study.com.purerecyclerview.freshlayout.State;
 import study.com.purerecyclerview.freshlayout.ViewStatus;
-import study.com.purerecyclerview.freshlayout.head.DefaultHeadView;
 import study.com.purerecyclerview.util.DisplayUtil;
 
 /**
  * Created by  HONGDA on 2018/12/17.
  * 头部有两个方案
- * 1、根据下拉距离动态改变头部高度
+ * 1、根据下拉距离动态改变头部高度，视觉上会有缺陷，适合头部动画是从小到大渐变的头部
  * 2、将布局放到屏幕之外，根据下拉距离滑动到屏幕内部
+ * 本类采用方案1实现
  */
 public class PureRefreshLayout extends FrameLayout {
 
-    private DefaultHeadView headView;
+    private HeadRefreshView headView;
     private FooterView footerView;
     private View childView;
 
@@ -100,7 +99,7 @@ public class PureRefreshLayout extends FrameLayout {
     private void addHeadView() {
         //防止重复添加
         if (headView == null) {
-            headView = new DefaultHeadView(getContext());
+            headView = new HeadRefreshView(getContext());
         } else {
             removeView(headView.getView());
         }
@@ -487,7 +486,7 @@ public class PureRefreshLayout extends FrameLayout {
      *
      * @param mHeaderView 需实现 HeadView 接口
      */
-    public void setHeaderView(DefaultHeadView mHeaderView) {
+    public void setHeaderView(HeadRefreshView mHeaderView) {
         this.headView = mHeaderView;
         addHeadView();
     }
