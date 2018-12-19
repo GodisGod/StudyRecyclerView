@@ -20,6 +20,7 @@ import study.com.purerecyclerview.freshlayout.HeadView;
 import study.com.purerecyclerview.freshlayout.LoadMoreView;
 import study.com.purerecyclerview.freshlayout.State;
 import study.com.purerecyclerview.freshlayout.ViewStatus;
+import study.com.purerecyclerview.freshlayout.head.DefaultFootView;
 import study.com.purerecyclerview.freshlayout.head.DefaultHeadView;
 import study.com.purerecyclerview.util.DisplayUtil;
 
@@ -36,8 +37,8 @@ public class PureRefreshLayout2 extends FrameLayout {
     private View childView;
 
     private static final long ANIM_TIME = 300;
-    private static int HEAD_HEIGHT = 60;
-    private static int FOOT_HEIGHT = 60;
+    private static int HEAD_HEIGHT = 50;
+    private static int FOOT_HEIGHT = 50;
 
     private static int head_height;
     private static int head_height_max;//最大滑动距离
@@ -123,12 +124,13 @@ public class PureRefreshLayout2 extends FrameLayout {
 
     private void addFooterView() {
         if (footerView == null) {
-            footerView = new LoadMoreView(getContext());
+            footerView = new DefaultFootView(getContext());
         } else {
             removeView(footerView.getView());
         }
-        LayoutParams layoutParams = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, 0);
+        LayoutParams layoutParams = new LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, foot_height);
         layoutParams.gravity = Gravity.BOTTOM;
+        layoutParams.bottomMargin = -foot_height;
         footerView.getView().setLayoutParams(layoutParams);
         if (footerView.getView().getParent() != null)
             ((ViewGroup) footerView.getView().getParent()).removeAllViews();
@@ -190,7 +192,12 @@ public class PureRefreshLayout2 extends FrameLayout {
                     if (canLoadMore) {
                         dura = Math.min(foot_height_max, Math.abs(dura));
                         dura = Math.max(0, Math.abs(dura));
-                        footerView.getView().getLayoutParams().height = (int) dura;
+                        //滑动footView
+                        LayoutParams layoutParams = (LayoutParams) footerView.getView().getLayoutParams();
+                        Log.i("LHD", "位移距离 ：" + dura + "   (-head_height+dura = " + (-foot_height + dura));
+                        layoutParams.bottomMargin = (int) (-foot_height + dura);
+                        footerView.getView().setLayoutParams(layoutParams);
+                        //同步向上移动recyclerview
                         ViewCompat.setTranslationY(childView, -dura);
                         requestLayout();
                         footerView.progress(dura, foot_height);
@@ -293,7 +300,9 @@ public class PureRefreshLayout2 extends FrameLayout {
                         headView.progress(value, head_height);
                     }
                 } else {
-                    footerView.getView().getLayoutParams().height = value;
+                    LayoutParams layoutParams = (LayoutParams) footerView.getView().getLayoutParams();
+                    layoutParams.bottomMargin = -foot_height + value;
+                    footerView.getView().setLayoutParams(layoutParams);
                     ViewCompat.setTranslationY(childView, -value);
                     if (end == 0) { //代表结束加载
                         footerView.finishing(value, head_height_max);
@@ -338,7 +347,8 @@ public class PureRefreshLayout2 extends FrameLayout {
                 setFinish(head_height, state);
             }
         } else {
-            if (footerView != null && footerView.getView().getLayoutParams().height > 0 && isLoadMore) {
+            FrameLayout.LayoutParams layoutParams = (LayoutParams) footerView.getView().getLayoutParams();
+            if (footerView != null && layoutParams.bottomMargin == 0 && isLoadMore) {
                 setFinish(foot_height, state);
             }
         }
