@@ -4,7 +4,6 @@ import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.support.v4.view.ViewCompat;
-import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.view.Gravity;
@@ -18,7 +17,6 @@ import study.com.purerecyclerview.R;
 import study.com.purerecyclerview.freshlayout.BaseRefreshListener;
 import study.com.purerecyclerview.freshlayout.FooterView;
 import study.com.purerecyclerview.freshlayout.HeadView;
-import study.com.purerecyclerview.freshlayout.LoadMoreView;
 import study.com.purerecyclerview.freshlayout.State;
 import study.com.purerecyclerview.freshlayout.ViewStatus;
 import study.com.purerecyclerview.freshlayout.head.DefaultFootView;
@@ -27,15 +25,15 @@ import study.com.purerecyclerview.util.DisplayUtil;
 
 /**
  * Created by  HONGDA on 2018/12/17.
- * 头部有两个方案
+ * 尾巴加载更多
  * 1、根据下拉距离动态改变头部高度
  * 2、将布局放到屏幕之外，根据下拉距离滑动到屏幕内部
  */
-public class PureRefreshLayout2 extends FrameLayout {
+public class PureRefreshLayout3 extends FrameLayout {
 
     private HeadView headView;
     private FooterView footerView;
-    private RecyclerView childView;
+    private View childView;
 
     private static final long ANIM_TIME = 300;
     private static int HEAD_HEIGHT = 50;
@@ -63,15 +61,15 @@ public class PureRefreshLayout2 extends FrameLayout {
     private View loadingView, errorView, emptyView;
     private int loading = R.layout.layout_loading, empty = R.layout.layout_empty, error = R.layout.layout_error;
 
-    public PureRefreshLayout2(Context context) {
+    public PureRefreshLayout3(Context context) {
         this(context, null);
     }
 
-    public PureRefreshLayout2(Context context, AttributeSet attrs) {
+    public PureRefreshLayout3(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public PureRefreshLayout2(Context context, AttributeSet attrs, int defStyleAttr) {
+    public PureRefreshLayout3(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
 
         TypedArray a = context.obtainStyledAttributes(attrs, R.styleable.PullToRefreshLayout, defStyleAttr, 0);
@@ -98,7 +96,7 @@ public class PureRefreshLayout2 extends FrameLayout {
     @Override
     protected void onFinishInflate() {
         super.onFinishInflate();
-        childView = (RecyclerView) getChildAt(0);
+        childView = getChildAt(0);
         addHeadView();
         addFooterView();
     }
@@ -304,6 +302,7 @@ public class PureRefreshLayout2 extends FrameLayout {
                     LayoutParams layoutParams = (LayoutParams) footerView.getView().getLayoutParams();
                     layoutParams.bottomMargin = -foot_height + value;
                     footerView.getView().setLayoutParams(layoutParams);
+                    Log.i("LHDEND", "value  = " + value);
                     ViewCompat.setTranslationY(childView, -value);
                     if (end == 0) { //代表结束加载
                         footerView.finishing(value, head_height_max);
@@ -318,6 +317,33 @@ public class PureRefreshLayout2 extends FrameLayout {
                 requestLayout();
             }
 
+        });
+        anim.start();
+    }
+
+    public void finishAnimator(@State.REFRESH_STATE final int state, final int start,
+                               final int end, final CallBack callBack) {
+        final ValueAnimator anim;
+        anim = ValueAnimator.ofInt(start, end);
+        anim.setDuration(ANIM_TIME);
+        anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            @Override
+            public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                int value = (int) valueAnimator.getAnimatedValue();
+                LayoutParams layoutParams = (LayoutParams) footerView.getView().getLayoutParams();
+                layoutParams.bottomMargin = -foot_height + value;
+                footerView.getView().setLayoutParams(layoutParams);
+                if (end == 0) { //代表结束加载
+                    footerView.finishing(value, head_height_max);
+                } else {
+                    footerView.progress(value, foot_height);
+                }
+                if (value == end) {
+                    if (callBack != null)
+                        callBack.onSuccess();
+                }
+                requestLayout();
+            }
         });
         anim.start();
     }
@@ -346,15 +372,24 @@ public class PureRefreshLayout2 extends FrameLayout {
      */
     private void setFinish(@State.REFRESH_STATE int state, boolean hasMore) {
         if (state == State.REFRESH) {
-            FrameLayout.LayoutParams layoutParams = (LayoutParams) headView.getView().getLayoutParams();
+            LayoutParams layoutParams = (LayoutParams) headView.getView().getLayoutParams();
             Log.i("LHD", "finish = " + layoutParams.topMargin);
             if (headView != null && layoutParams.topMargin == 0 && isRefresh) {
                 setFinish(head_height, state);
             }
         } else {
-            FrameLayout.LayoutParams layoutParams = (LayoutParams) footerView.getView().getLayoutParams();
+            LayoutParams layoutParams = (LayoutParams) footerView.getView().getLayoutParams();
             if (footerView != null && layoutParams.bottomMargin == 0 && isLoadMore) {
-                setFinish(foot_height, state);
+                if (hasMore) {//有更多数据的时候recyclerview悬停
+                    Log.i("LHD", "有更多数据");
+                    LayoutParams lp = (LayoutParams) footerView.getView().getLayoutParams();
+                    lp.bottomMargin = -foot_height;
+                    footerView.getView().setLayoutParams(lp);
+
+                } else {//没有更多数据的时候，recyclerview回到底部
+                    //todo
+                    setFinish(foot_height, state);
+                }
             }
         }
     }

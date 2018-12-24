@@ -13,10 +13,11 @@ import study.com.purerecyclerview.freshlayout.BaseRefreshListener;
 import study.com.purerecyclerview.freshlayout.layout.PureRefreshLayout;
 import study.com.purerecyclerview.freshlayout.adapter.RecyclerViewAdapter;
 import study.com.purerecyclerview.freshlayout.layout.PureRefreshLayout2;
+import study.com.purerecyclerview.freshlayout.layout.PureRefreshLayout3;
 
 public class PurRecyclerviewActivity extends AppCompatActivity {
 
-    private PureRefreshLayout2 pullToRefreshLayout;
+    private PureRefreshLayout3 pullToRefreshLayout;
     private RecyclerView recyclerView;
     private RecyclerViewAdapter adapter;
     private List<String> list;
@@ -56,7 +57,11 @@ public class PurRecyclerviewActivity extends AppCompatActivity {
                 new Handler().postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        pullToRefreshLayout.finishLoadMore();
+                        for (int i = 0; i < 2; i++) {
+                            list.add("上拉加载更多" + i);
+                        }
+                        adapter.notifyDataSetChanged();
+                        pullToRefreshLayout.finishLoadMore(true);
                     }
                 }, 2000);
             }

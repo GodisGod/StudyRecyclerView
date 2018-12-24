@@ -8,7 +8,7 @@
     <FrameLayout
         android:id="@+id/fram_top"
         android:layout_width="match_parent"
-        android:layout_height="80dp"
+        android:layout_height="10dp"
         android:layout_marginTop="-20dp"
         android:background="#0af"
         android:orientation="horizontal">
@@ -20,6 +20,12 @@
             android:text="下拉刷新" />
 
     </FrameLayout>
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/recycler_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#6023" />
 
     <Button
         android:id="@+id/go_down"
