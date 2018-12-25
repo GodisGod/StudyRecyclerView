@@ -223,7 +223,7 @@ public class PureRefreshLayout3 extends FrameLayout {
                             }
                         });
                     } else {//没超过刷新距离则不刷新
-                        setFinish(dy1, State.REFRESH);
+                        finishAnim(dy1, State.REFRESH);
                         headView.normal();
                     }
                 } else {
@@ -241,7 +241,7 @@ public class PureRefreshLayout3 extends FrameLayout {
                                 }
                             });
                         } else {
-                            setFinish(Math.abs(dy1), State.LOADMORE);
+                            finishAnim(Math.abs(dy1), State.LOADMORE);
                             footerView.normal();
                         }
                     }
@@ -251,29 +251,6 @@ public class PureRefreshLayout3 extends FrameLayout {
         return super.onTouchEvent(event);
     }
 
-    /**
-     * 判断RecyclerView是否可以继续向下滚动
-     *
-     * @return
-     */
-    private boolean canChildScrollUp() {
-        if (childView == null) {
-            return false;
-        }
-        return ViewCompat.canScrollVertically(childView, -1);
-    }
-
-    /**
-     * 判断RecyclerView是否可以继续向上滚动
-     *
-     * @return
-     */
-    private boolean canChildScrollDown() {
-        if (childView == null) {
-            return false;
-        }
-        return ViewCompat.canScrollVertically(childView, 1);
-    }
 
     /**
      * 创建动画
@@ -316,13 +293,11 @@ public class PureRefreshLayout3 extends FrameLayout {
                 }
                 requestLayout();
             }
-
         });
         anim.start();
     }
 
-    public void finishAnimator(@State.REFRESH_STATE final int state, final int start,
-                               final int end, final CallBack callBack) {
+    public void finishAnimator(final int start, final int end, final CallBack callBack) {
         final ValueAnimator anim;
         anim = ValueAnimator.ofInt(start, end);
         anim.setDuration(ANIM_TIME);
@@ -349,9 +324,12 @@ public class PureRefreshLayout3 extends FrameLayout {
     }
 
     /**
-     * 结束下拉刷新
+     * 结束动画
+     *
+     * @param start 开始高度,结束高度为0
+     * @param state 下拉刷新或者上拉加载
      */
-    private void setFinish(int start, @State.REFRESH_STATE final int state) {
+    private void finishAnim(int start, @State.REFRESH_STATE final int state) {
         createAnimatorTranslationY(state, start, 0, new CallBack() {
             @Override
             public void onSuccess() {
@@ -373,22 +351,24 @@ public class PureRefreshLayout3 extends FrameLayout {
     private void setFinish(@State.REFRESH_STATE int state, boolean hasMore) {
         if (state == State.REFRESH) {
             LayoutParams layoutParams = (LayoutParams) headView.getView().getLayoutParams();
-            Log.i("LHD", "finish = " + layoutParams.topMargin);
+            Log.i("END", "finish = " + layoutParams.topMargin);
             if (headView != null && layoutParams.topMargin == 0 && isRefresh) {
-                setFinish(head_height, state);
+                finishAnim(head_height, State.REFRESH);
             }
         } else {
             LayoutParams layoutParams = (LayoutParams) footerView.getView().getLayoutParams();
             if (footerView != null && layoutParams.bottomMargin == 0 && isLoadMore) {
                 if (hasMore) {//有更多数据的时候recyclerview悬停
-                    Log.i("LHD", "有更多数据");
-                    LayoutParams lp = (LayoutParams) footerView.getView().getLayoutParams();
-                    lp.bottomMargin = -foot_height;
-                    footerView.getView().setLayoutParams(lp);
-
+                    Log.i("END", "有更多数据 1");
+                    finishAnimator(foot_height, 0, new CallBack() {
+                        @Override
+                        public void onSuccess() {
+                            Log.i("END", "有更多数据 2 onSuccess");
+                        }
+                    });
                 } else {//没有更多数据的时候，recyclerview回到底部
                     //todo
-                    setFinish(foot_height, state);
+                    finishAnim(foot_height, State.LOADMORE);
                 }
             }
         }
@@ -662,6 +642,30 @@ public class PureRefreshLayout3 extends FrameLayout {
         }
         head_height_max = DisplayUtil.dp2Px(getContext(), refresh);
         foot_height_max = DisplayUtil.dp2Px(getContext(), loadMore);
+    }
+
+    /**
+     * 判断RecyclerView是否可以继续向下滚动
+     *
+     * @return
+     */
+    private boolean canChildScrollUp() {
+        if (childView == null) {
+            return false;
+        }
+        return ViewCompat.canScrollVertically(childView, -1);
+    }
+
+    /**
+     * 判断RecyclerView是否可以继续向上滚动
+     *
+     * @return
+     */
+    private boolean canChildScrollDown() {
+        if (childView == null) {
+            return false;
+        }
+        return ViewCompat.canScrollVertically(childView, 1);
     }
 
 
