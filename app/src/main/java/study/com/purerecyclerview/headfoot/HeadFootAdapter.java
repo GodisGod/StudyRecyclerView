@@ -12,33 +12,29 @@ import java.util.List;
 import study.com.purerecyclerview.R;
 import study.com.purerecyclerview.freshlayout.adapter.HeadAndFootAdapter;
 
-public class HeadFootAdapter extends HeadAndFootAdapter {
+public class HeadFootAdapter extends HeadAndFootAdapter<HeadFootAdapter.ItemHolder> {
 
     private List<String> list;
 
-    public HeadFootAdapter(RecyclerView.Adapter adapter) {
-        super(adapter);
+    public HeadFootAdapter(List<String> list) {
         this.list = list;
     }
 
-    @NonNull
     @Override
-    public RecyclerView.ViewHolder onCreateViewHolder(@NonNull ViewGroup viewGroup, int key) {
+    protected ItemHolder onCreateItemViewHolder(@NonNull ViewGroup viewGroup, int key) {
         View view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.layout_item, null);
         return new ItemHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(RecyclerView.ViewHolder viewHolder, int position) {
-        ItemHolder itemHolder = (ItemHolder) viewHolder;
+    protected void onBindItemViewHolder(@NonNull ItemHolder itemHolder, int position) {
         itemHolder.tv.setText(list.get(position));
     }
 
-//
-//    @Override
-//    public int getItemCount() {
-//        return list.size();
-//    }
+    @Override
+    protected int getRealCount() {
+        return list.size();
+    }
 
     class ItemHolder extends RecyclerView.ViewHolder {
 

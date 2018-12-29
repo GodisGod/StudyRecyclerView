@@ -1,5 +1,6 @@
 package study.com.purerecyclerview.freshlayout.adapter;
 
+import android.support.annotation.NonNull;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -11,7 +12,7 @@ import java.util.List;
 
 import study.com.purerecyclerview.R;
 
-public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.RecyclerViewHolder> {
+public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapter.ItemHolder> {
 
     private List<String> list;
 
@@ -19,15 +20,16 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
         this.list = list;
     }
 
+    @NonNull
     @Override
-    public RecyclerViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.layout_item,null);
-        return new RecyclerViewHolder(view);
+    public ItemHolder onCreateViewHolder(@NonNull ViewGroup parent, int i) {
+        View view = LayoutInflater.from(parent.getContext()).inflate(R.layout.layout_item, null);
+        return new ItemHolder(view);
     }
 
     @Override
-    public void onBindViewHolder(RecyclerViewHolder holder, int position) {
-        holder.tv.setText(list.get(position));
+    public void onBindViewHolder(@NonNull ItemHolder itemHolder, int position) {
+        itemHolder.tv.setText(list.get(position));
     }
 
     @Override
@@ -35,11 +37,12 @@ public class RecyclerViewAdapter extends RecyclerView.Adapter<RecyclerViewAdapte
         return list.size();
     }
 
-    class RecyclerViewHolder extends RecyclerView.ViewHolder{
+
+    class ItemHolder extends RecyclerView.ViewHolder {
 
         private TextView tv;
 
-        public RecyclerViewHolder(View itemView) {
+        public ItemHolder(View itemView) {
             super(itemView);
             tv = (TextView) itemView.findViewById(R.id.item_tv);
         }

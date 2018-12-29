@@ -2,11 +2,16 @@ package study.com.purerecyclerview;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import study.com.purerecyclerview.freshlayout.HeadView;
 import study.com.purerecyclerview.headfoot.HeadFootAdapter;
 
 public class TestAddHeadAndFootActivity extends AppCompatActivity {
@@ -14,6 +19,7 @@ public class TestAddHeadAndFootActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private List<String> list;
     private HeadFootAdapter headFootAdapter;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -23,9 +29,60 @@ public class TestAddHeadAndFootActivity extends AppCompatActivity {
 
         list = new ArrayList<>();
 
-        for (int i = 0; i < 2; i++) {
+        for (int i = 0; i < 10; i++) {
             list.add("PullToRefreshLayout" + i);
         }
-        headFootAdapter = new HeadFootAdapter()
+        headFootAdapter = new HeadFootAdapter(list);
+
+        recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
+        recyclerView.setAdapter(headFootAdapter);
+        initListener();
     }
+
+    private void initListener() {
+        findViewById(R.id.btn_add_head).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                headFootAdapter.addHeadView(getHeaderView());
+            }
+        });
+        findViewById(R.id.btn_remove_head).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (headerViews.size() == 0) return;
+                View view = headerViews.remove(headerViews.size() - 1);
+                headFootAdapter.removeHeadView(view);
+            }
+        });
+        findViewById(R.id.btn_add_foot).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                headFootAdapter.addFootView(getFooterView());
+            }
+        });
+        findViewById(R.id.btn_remove_foot).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (footerViews.size() == 0) return;
+                View view = footerViews.remove(footerViews.size() - 1);
+                headFootAdapter.removeFootView(view);
+            }
+        });
+    }
+
+    private ArrayList<View> headerViews = new ArrayList<>();
+    private ArrayList<View> footerViews = new ArrayList<>();
+
+    private View getHeaderView() {
+        View view = LayoutInflater.from(this).inflate(R.layout.layout_header, recyclerView, false);
+        headerViews.add(view);
+        return view;
+    }
+
+    private View getFooterView() {
+        View view = LayoutInflater.from(this).inflate(R.layout.layout_header, recyclerView, false);
+        footerViews.add(view);
+        return view;
+    }
+
 }
