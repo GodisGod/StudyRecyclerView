@@ -10,7 +10,7 @@
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
         <activity android:name=".MainActivity" />
-        <activity android:name=".PurRecyclerviewActivity"></activity>
+        <activity android:name=".PurRecyclerviewActivity" />
         <activity android:name=".TestActivity">
 
         </activity>
@@ -20,6 +20,9 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+        </activity>
+        <activity android:name=".Test2Activity">
+
         </activity>
     </application>
 

@@ -4,4 +4,10 @@
     <color name="colorPrimaryDark">#00574B</color>
     <color name="colorAccent">#D81B60</color>
     <color name="grey">#aaaaaa</color>
+
+    <color name="graylight">#ddd</color>
+    <color name="gray">#aaa</color>
+    <color name="graydark">#777</color>
+    <color name="graydarker">#555</color>
+    <color name="black">#333</color>
 </resources>

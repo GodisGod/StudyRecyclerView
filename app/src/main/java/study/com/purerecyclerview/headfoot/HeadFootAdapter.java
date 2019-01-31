@@ -12,29 +12,33 @@ import java.util.List;
 import study.com.purerecyclerview.R;
 import study.com.purerecyclerview.freshlayout.adapter.HeadAndFootAdapter;
 
-public class HeadFootAdapter extends HeadAndFootAdapter<HeadFootAdapter.ItemHolder> {
+public class HeadFootAdapter extends HeadAndFootAdapter {
 
     private List<String> list;
 
-    public HeadFootAdapter(List<String> list) {
-        this.list = list;
+    public HeadFootAdapter(RecyclerView.Adapter realAdapter) {
+        super(realAdapter);
     }
 
-    @Override
-    protected ItemHolder onCreateItemViewHolder(@NonNull ViewGroup viewGroup, int key) {
-        View view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.layout_item, null);
-        return new ItemHolder(view);
-    }
-
-    @Override
-    protected void onBindItemViewHolder(@NonNull ItemHolder itemHolder, int position) {
-        itemHolder.tv.setText(list.get(position));
-    }
-
-    @Override
-    protected int getRealCount() {
-        return list.size();
-    }
+//    public HeadFootAdapter(List<String> list) {
+//        this.list = list;
+//    }
+//
+//    @Override
+//    protected ItemHolder onCreateItemViewHolder(@NonNull ViewGroup viewGroup, int key) {
+//        View view = LayoutInflater.from(viewGroup.getContext()).inflate(R.layout.layout_item, null);
+//        return new ItemHolder(view);
+//    }
+//
+//    @Override
+//    protected void onBindItemViewHolder(@NonNull ItemHolder itemHolder, int position) {
+//        itemHolder.tv.setText(list.get(position));
+//    }
+//
+//    @Override
+//    protected int getRealCount() {
+//        return list.size();
+//    }
 
     class ItemHolder extends RecyclerView.ViewHolder {
 

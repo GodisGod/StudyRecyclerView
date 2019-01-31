@@ -2,6 +2,7 @@ package study.com.purerecyclerview;
 
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
@@ -12,11 +13,13 @@ import java.util.ArrayList;
 import java.util.List;
 
 import study.com.purerecyclerview.headfoot.HeadFootAdapter;
+import study.com.purerecyclerview.headfoot.HeadFootRealAdapter;
 
 public class TestAddHeadAndFootActivity extends AppCompatActivity {
 
     private RecyclerView recyclerView;
     private List<String> list;
+    private HeadFootRealAdapter headFootRealAdapter;
     private HeadFootAdapter headFootAdapter;
 
     @Override
@@ -31,11 +34,13 @@ public class TestAddHeadAndFootActivity extends AppCompatActivity {
         for (int i = 0; i < 2; i++) {
             list.add("PullToRefreshLayout" + i);
         }
-        headFootAdapter = new HeadFootAdapter(list);
+
+        headFootRealAdapter = new HeadFootRealAdapter(list);
+        headFootAdapter = new HeadFootAdapter(headFootRealAdapter);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
-//        recyclerView.setLayoutManager(new GridLayoutManager(this, 4));
-//        recyclerView.setLayoutManager(new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL));
+        recyclerView.setLayoutManager(new GridLayoutManager(this, 4));
+        recyclerView.setLayoutManager(new StaggeredGridLayoutManager(2, StaggeredGridLayoutManager.VERTICAL));
         recyclerView.setAdapter(headFootAdapter);
         initListener();
     }

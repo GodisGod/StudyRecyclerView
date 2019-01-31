@@ -8,11 +8,17 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.FrameLayout;
+import android.widget.SimpleAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import study.com.purerecyclerview.customview.LoadMoreRecyclerView;
+import study.com.purerecyclerview.freshlayout.adapter.LoadMoreAdapter;
 import study.com.purerecyclerview.freshlayout.adapter.RecyclerViewAdapter;
+import study.com.purerecyclerview.freshlayout.adapter.TestAdapter;
+import study.com.purerecyclerview.viewcreator.DefaultLoadFooterCreator;
+import study.com.purerecyclerview.viewcreator.LoadFooterCreator;
 
 public class TestActivity extends AppCompatActivity {
 
@@ -20,26 +26,32 @@ public class TestActivity extends AppCompatActivity {
     private int i = 0;
     private RecyclerView recyclerView;
     private RecyclerViewAdapter recyclerViewAdapter;
-    private RecyclerViewAdapter adapter;
+    //    private RecyclerViewAdapter adapter;
+    private TestAdapter adapter;
     private List<String> list;
+
+    //自定义view
+    private LoadMoreRecyclerView loadMoreRecyclerView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_test);
         framTop = findViewById(R.id.fram_top);
-        recyclerView = findViewById(R.id.recycler_content);
-        list = new ArrayList<>();
 
-        for (int i = 0; i < 2; i++) {
+        loadMoreRecyclerView = findViewById(R.id.load_more_recycler_view);
+        list = new ArrayList<>();
+        for (int i = 0; i < 10; i++) {
             list.add("PullToRefreshLayout" + i);
         }
-
-        adapter = new RecyclerViewAdapter(list);
-
-        recyclerView.setLayoutManager(new LinearLayoutManager(this));
-        recyclerView.setAdapter(adapter);
+        adapter = new TestAdapter(list);
+        loadMoreRecyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
+        loadMoreRecyclerView.setAdapter(adapter);
         initListener();
+
+//        LoadFooterCreator mLoadFooterCreator = new DefaultLoadFooterCreator();
+//        View mLoadView = mLoadFooterCreator.getLoadView(this, null);
+//        View mNoMoreView = mLoadFooterCreator.getNoMoreView(this, null);
     }
 
     private void initListener() {

@@ -5,13 +5,14 @@ import android.support.v4.util.SparseArrayCompat;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.StaggeredGridLayoutManager;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 
 /**
  * Created by  HONGDA on 2018/12/24.
  */
-public abstract class HeadAndFootAdapter<T extends RecyclerView.ViewHolder> extends RecyclerView.Adapter {
+public abstract class HeadAndFootAdapter<T extends RecyclerView.Adapter> extends RecyclerView.Adapter {
 
     private static int BASE_ITEM_TYPE_HEAD = 1000;
     private static int BASE_ITEM_TYPE_FOOT = 2000;
@@ -20,11 +21,15 @@ public abstract class HeadAndFootAdapter<T extends RecyclerView.ViewHolder> exte
     protected SparseArrayCompat<View> headViews;
     protected SparseArrayCompat<View> footViews;
 
-    public HeadAndFootAdapter() {
+    protected T realAdapter;
+
+    public HeadAndFootAdapter(T realAdapter) {
         //别忘记调用父类的构造函数
         super();
+        Log.i("LHD", "HeadAndFootAdapter初始化");
         headViews = new SparseArrayCompat<>();
         footViews = new SparseArrayCompat<>();
+        this.realAdapter = realAdapter;
     }
 
     @NonNull
@@ -43,7 +48,7 @@ public abstract class HeadAndFootAdapter<T extends RecyclerView.ViewHolder> exte
             View footView = footViews.valueAt(footPosition);
             return new FootHolder(footView);
         }
-        return onCreateItemViewHolder(viewGroup, key);
+        return realAdapter.onCreateViewHolder(viewGroup, key);
     }
 
     @Override
@@ -52,7 +57,7 @@ public abstract class HeadAndFootAdapter<T extends RecyclerView.ViewHolder> exte
 
         } else {
             int itemPosition = position - getHeadCount();
-            onBindItemViewHolder((T) viewHolder, itemPosition);
+            realAdapter.onBindViewHolder(viewHolder, itemPosition);
         }
     }
 
@@ -60,6 +65,7 @@ public abstract class HeadAndFootAdapter<T extends RecyclerView.ViewHolder> exte
     public int getItemCount() {
         return getHeadCount() + getRealCount() + getFootCount();
     }
+
 
     @Override
     public int getItemViewType(int position) {
@@ -69,7 +75,10 @@ public abstract class HeadAndFootAdapter<T extends RecyclerView.ViewHolder> exte
         if (isFoot(position)) {//每一个footView对应一个viewType
             return footViews.keyAt(position - getHeadCount() - getRealCount());
         }
-        return 0;//查询源码可知，当不调用getItemViewType方法的时候，也就是只有一种布局类型的时候，默认返回是0
+        //查询源码可知，当不调用getItemViewType方法的时候，也就是只有一种布局类型的时候，默认返回是0
+        //这里我们需要返回真实的adapter的position
+        Log.i("LHD", "");
+        return realAdapter.getItemViewType(position - getHeadCount());
     }
 
     public void addHeadView(View view) {
@@ -187,16 +196,12 @@ public abstract class HeadAndFootAdapter<T extends RecyclerView.ViewHolder> exte
         return footViews.size();
     }
 
-    //子类必须实现的方法
-    protected abstract T onCreateItemViewHolder(@NonNull ViewGroup viewGroup, int key);
-
-    protected abstract void onBindItemViewHolder(@NonNull T viewHolder, int position);
-
     /**
-     * @return 获取正常item的数量
+     * @return 返回真实的item数量
      */
-    protected abstract int getRealCount();
-
+    private int getRealCount() {
+        return realAdapter.getItemCount();
+    }
 
     //viewHolder
     private class HeadHolder extends RecyclerView.ViewHolder {

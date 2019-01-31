@@ -21,11 +21,17 @@
 
     </FrameLayout>
 
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/recycler_content"
+    <!--<android.support.v7.widget.RecyclerView-->
+    <!--android:id="@+id/recycler_content"-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="match_parent"-->
+    <!--android:background="#6023" />-->
+
+    <study.com.purerecyclerview.customview.LoadMoreRecyclerView
+        android:id="@+id/load_more_recycler_view"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="#6023" />
+        android:background="#eee" />
 
     <Button
         android:id="@+id/go_down"
