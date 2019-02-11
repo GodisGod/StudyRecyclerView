@@ -5,6 +5,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.widget.CheckBox;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -21,6 +22,7 @@ public class PurRecyclerviewActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private RecyclerViewAdapter adapter;
     private List<String> list;
+    private CheckBox checkBox;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -29,6 +31,7 @@ public class PurRecyclerviewActivity extends AppCompatActivity {
 
         pullToRefreshLayout = findViewById(R.id.recycler_layout);
         recyclerView = findViewById(R.id.recycler_view);
+        checkBox = findViewById(R.id.check_has_more);
 
         list = new ArrayList<>();
 
@@ -61,7 +64,7 @@ public class PurRecyclerviewActivity extends AppCompatActivity {
                             list.add("上拉加载更多" + i);
                         }
                         adapter.notifyDataSetChanged();
-                        pullToRefreshLayout.finishLoadMore(true);
+                        pullToRefreshLayout.finishLoadMore(checkBox.isChecked());
                     }
                 }, 2000);
             }

@@ -22,10 +22,11 @@ import study.com.purerecyclerview.freshlayout.ViewStatus;
 import study.com.purerecyclerview.freshlayout.head.DefaultFootView;
 import study.com.purerecyclerview.freshlayout.head.DefaultHeadView;
 import study.com.purerecyclerview.util.DisplayUtil;
+import study.com.purerecyclerview.util.LogUtil;
 
 /**
  * Created by  HONGDA on 2018/12/17.
- * 尾巴加载更多
+ * 尾部加载更多
  * 1、根据下拉距离动态改变头部高度
  * 2、将布局放到屏幕之外，根据下拉距离滑动到屏幕内部
  */
@@ -349,6 +350,7 @@ public class PureRefreshLayout3 extends FrameLayout {
      * @param hasMore 如果是上拉记载更多，true表示有更多数据,false表示无更多数据
      */
     private void setFinish(@State.REFRESH_STATE int state, boolean hasMore) {
+        LogUtil.i("setFinish---->state = " + state + "  hasMore = " + hasMore);
         if (state == State.REFRESH) {
             LayoutParams layoutParams = (LayoutParams) headView.getView().getLayoutParams();
             Log.i("END", "finish = " + layoutParams.topMargin);
@@ -358,18 +360,23 @@ public class PureRefreshLayout3 extends FrameLayout {
         } else {
             LayoutParams layoutParams = (LayoutParams) footerView.getView().getLayoutParams();
             if (footerView != null && layoutParams.bottomMargin == 0 && isLoadMore) {
-                if (hasMore) {//有更多数据的时候recyclerview悬停
-                    Log.i("END", "有更多数据 1");
-                    finishAnimator(foot_height, 0, new CallBack() {
-                        @Override
-                        public void onSuccess() {
-                            Log.i("END", "有更多数据 2 onSuccess");
-                        }
-                    });
-                } else {//没有更多数据的时候，recyclerview回到底部
-                    //todo
-                    finishAnim(foot_height, State.LOADMORE);
-                }
+//                if (hasMore) {//有更多数据的时候recyclerview悬停
+//                    Log.i("END", "有更多数据 1");
+//                    //todo
+//                    finishAnimator(foot_height, 0, new CallBack() {
+//                        @Override
+//                        public void onSuccess() {
+//                            Log.i("END", "有更多数据 2 onSuccess");
+//
+//                        }
+//                    });
+//                } else {//没有更多数据的时候，recyclerview回到底部
+//                    //todo
+//                }
+                //使用外部布局嵌套recyclerview的方式原理是通过移动recyclerview的view来进行上拉加载的
+                //所以无法实现无缝加载，必须得回到底部然后再次上拉才能看到新加载的更多数据
+                //所以要实现无缝加载，需要用自定义recyclerview的方式去实现
+                finishAnim(foot_height, State.LOADMORE);
             }
         }
     }
