@@ -56,7 +56,7 @@ public class TestView extends RecyclerView {
     private float currentY = 0;
     private float distance = 0;
     //这个标志位通过判断是否是滑动到底部后继续上拉的动作，来决定是否改变bottomView的高度
-    private boolean canExitAnim = false;//是否执行动画
+    private boolean isBottom = false;//是否执行动画
     private float ratio = 0.5f;//滑动距离和头部view下拉高度的比率，默认是3
 
     private static int foot_height_max;//最大滑动距离
@@ -139,17 +139,16 @@ public class TestView extends RecyclerView {
             case MotionEvent.ACTION_DOWN:
                 curState = STATE_DEFAULT;
                 LogUtil.i("LHD  MotionEvent.ACTION_DOWN " + isBottom());
-                if (isBottom()) {//如果沒有滑动到底部不处理
+                isBottom = isBottom();//记录是否处理抬起的手势
+                if (isBottom) {//如果沒有滑动到底部不处理
                     downY = e.getRawY();
                     currentY = downY;
-                    canExitAnim = true;//记录是否处理抬起的手势
                 } else {
-                    canExitAnim = false;
                     break;
                 }
                 break;
             case MotionEvent.ACTION_MOVE:
-                if (!canExitAnim) return super.onTouchEvent(e);
+                if (!isBottom) return super.onTouchEvent(e);
                 currentY = e.getRawY();
                 float dy = (currentY - downY) * ratio;
 //                LogUtil.i("LHD 计算dy1 = " + dy + "   currentY = " + currentY + "   downY = " + downY);
@@ -164,10 +163,11 @@ public class TestView extends RecyclerView {
             case MotionEvent.ACTION_CANCEL:
             case MotionEvent.ACTION_UP:
                 //如果不是滑动到底部的抬起动作，则不处理
-                LogUtil.i("LHD  MotionEvent.ACTION_UP + " + canExitAnim);
-                if (canExitAnim) {
+                LogUtil.i("LHD  MotionEvent.ACTION_UP + " + isBottom);
+                if (isBottom) {
                     currentY = e.getRawY();
                     float dy2 = (currentY - downY) * ratio;
+                    if (dy2 > 0) break;//如果是滑动到底部以后，再往上滑动，则不处理
                     distance = Math.abs(dy2);
                     LogUtil.i("LHD 计算dy3 = " + distance);
                     checkState(distance);
@@ -224,7 +224,7 @@ public class TestView extends RecyclerView {
         //dy的高度决定了bottomView的高度，所以不可随意设置
         if (dy < 1) dy = 1;
         if (bottomView != null) {
-            LogUtil.i("LHD 设置bottomView的高度 = " + dy);
+//            LogUtil.i("LHD 设置bottomView的高度 = " + dy);
             bottomLp = bottomView.getLayoutParams();
             bottomLp.height = (int) dy;
             bottomView.setLayoutParams(bottomLp);
@@ -316,6 +316,8 @@ public class TestView extends RecyclerView {
         LogUtil.i("resetRecyclerView = loadViewHeight = " + loadViewHeight);
         marginLayoutParams.setMargins(marginLayoutParams.leftMargin, marginLayoutParams.topMargin, marginLayoutParams.rightMargin, -loadViewHeight - 1);
         setLayoutParams(marginLayoutParams);
+        //别忘了重置标志位
+        isBottom = false;
     }
 
 }
