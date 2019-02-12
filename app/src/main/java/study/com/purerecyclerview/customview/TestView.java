@@ -2,6 +2,7 @@ package study.com.purerecyclerview.customview;
 
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.graphics.Color;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.view.ViewCompat;
@@ -16,6 +17,7 @@ import study.com.purerecyclerview.R;
 import study.com.purerecyclerview.freshlayout.adapter.HeadAndFootAdapter;
 import study.com.purerecyclerview.headfoot.HeadFootAdapter;
 import study.com.purerecyclerview.util.LogUtil;
+import study.com.purerecyclerview.viewcreator.DefaultLoadFooterCreator;
 
 /**
  * Created by  HONGDA on 2019/1/10.
@@ -53,6 +55,7 @@ public class TestView extends RecyclerView {
     private float downY = 0;
     private float currentY = 0;
     private float distance = 0;
+    //这个标志位通过判断是否是滑动到底部后继续上拉的动作，来决定是否改变bottomView的高度
     private boolean canExitAnim = false;//是否执行动画
     private float ratio = 0.5f;//滑动距离和头部view下拉高度的比率，默认是3
 
@@ -61,6 +64,11 @@ public class TestView extends RecyclerView {
     private ValueAnimator anim;
     //动画时间长度
     private static final long ANIM_TIME = 300;
+
+    //用于记录滑动过程中,底部临界动画的触发
+    private int tempState = DefaultFootViewCreator.STATE_PULL_TO_RELEASE;
+
+    private OnLoadMoreFootViewCreator onLoadMoreFootViewCreator;
 
     public TestView(@NonNull Context context) {
         this(context, null);
@@ -77,27 +85,18 @@ public class TestView extends RecyclerView {
     }
 
     private void init(Context context) {
-        loadMoreView = LayoutInflater.from(context).inflate(R.layout.layout_header, null);
-        loadMoreView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, (int) getResources().getDimension(R.dimen.head_height)));
-        bottomView = new View(context);
+        onLoadMoreFootViewCreator = new DefaultFootViewCreator();
+        loadMoreView = onLoadMoreFootViewCreator.getLoadMoreView(context);
+        //构建bottomView，无需开放给自定义footCreator
+//        bottomView = new View(context);
+//        bottomView.setBackgroundColor(Color.RED);
+        bottomView = LayoutInflater.from(context).inflate(R.layout.view_bottom, null);
         ViewGroup.LayoutParams layoutParams = new LayoutParams(LayoutParams.MATCH_PARENT, 1);
         //该view的高度不能为0，否则将无法判断是否已滑动到底部
         bottomView.setLayoutParams(layoutParams);
-        loadViewHeight = (int) getResources().getDimension(R.dimen.head_height);
-        foot_height_max = loadViewHeight * 2;
-    }
-
-    @Override
-    protected void onMeasure(int widthSpec, int heightSpec) {
-//        if (loadMoreView != null && loadViewHeight == 0) {
-//            loadMoreView.measure(0, 0);
-//            loadViewHeight = loadMoreView.getLayoutParams().height;
-//            ViewGroup.MarginLayoutParams marginLayoutParams = (ViewGroup.MarginLayoutParams) getLayoutParams();
-//            LogUtil.i("onMeasure = loadViewHeight = " + loadViewHeight);
-//            marginLayoutParams.setMargins(marginLayoutParams.leftMargin, marginLayoutParams.topMargin, marginLayoutParams.rightMargin, marginLayoutParams.bottomMargin - loadViewHeight - 1);
-//            setLayoutParams(marginLayoutParams);
-//        }
-        super.onMeasure(widthSpec, heightSpec);
+        //获取loadMoreView的高度
+        loadViewHeight = onLoadMoreFootViewCreator.getLoadMoreViewHeight(context);
+        foot_height_max = loadViewHeight * 4;
     }
 
     @Override
@@ -109,7 +108,7 @@ public class TestView extends RecyclerView {
         addFooterView(bottomView);
         //初始化loadView的位置
         ViewGroup.MarginLayoutParams marginLayoutParams = (ViewGroup.MarginLayoutParams) getLayoutParams();
-        LogUtil.i("onMeasure = loadViewHeight = " + loadViewHeight);
+        LogUtil.i("setAdapter = loadViewHeight = " + loadViewHeight + "   marginLayoutParams.bottomMargin = " + marginLayoutParams.bottomMargin);
         marginLayoutParams.setMargins(marginLayoutParams.leftMargin, marginLayoutParams.topMargin, marginLayoutParams.rightMargin, marginLayoutParams.bottomMargin - loadViewHeight - 1);
         setLayoutParams(marginLayoutParams);
     }
@@ -141,7 +140,7 @@ public class TestView extends RecyclerView {
                 curState = STATE_DEFAULT;
                 LogUtil.i("LHD  MotionEvent.ACTION_DOWN " + isBottom());
                 if (isBottom()) {//如果沒有滑动到底部不处理
-                    downY = e.getY();
+                    downY = e.getRawY();
                     currentY = downY;
                     canExitAnim = true;//记录是否处理抬起的手势
                 } else {
@@ -150,13 +149,14 @@ public class TestView extends RecyclerView {
                 }
                 break;
             case MotionEvent.ACTION_MOVE:
-                currentY = e.getY();
+                if (!canExitAnim) return super.onTouchEvent(e);
+                currentY = e.getRawY();
                 float dy = (currentY - downY) * ratio;
 //                LogUtil.i("LHD 计算dy1 = " + dy + "   currentY = " + currentY + "   downY = " + downY);
                 if (dy < 0) {
                     dy = Math.min(foot_height_max, Math.abs(dy));
                     dy = Math.max(0, Math.abs(dy));
-//                    LogUtil.i("LHD 计算dy2 = " + dy);
+                    LogUtil.i("LHD 计算dy2 = " + dy);
                     //滑动footView
                     scollFoot(dy);
                 }
@@ -166,9 +166,10 @@ public class TestView extends RecyclerView {
                 //如果不是滑动到底部的抬起动作，则不处理
                 LogUtil.i("LHD  MotionEvent.ACTION_UP + " + canExitAnim);
                 if (canExitAnim) {
-                    currentY = e.getY();
+                    currentY = e.getRawY();
                     float dy2 = (currentY - downY) * ratio;
                     distance = Math.abs(dy2);
+                    LogUtil.i("LHD 计算dy3 = " + distance);
                     checkState(distance);
                     if (distance > 0) {
                         startAction();
@@ -186,7 +187,7 @@ public class TestView extends RecyclerView {
      * @param dy
      */
     private void checkState(float dy) {
-        if (dy >= getResources().getDimension(R.dimen.head_height)) {
+        if (dy >= loadViewHeight) {
             //释放刷新
             curState = STATE_RELEASE_TO_LOAD;
         } else {
@@ -219,10 +220,32 @@ public class TestView extends RecyclerView {
     private ViewGroup.LayoutParams bottomLp;
 
     private void scollFoot(float dy) {
+        //该view的高度不能为0，否则将无法判断是否已滑动到底部
+        //dy的高度决定了bottomView的高度，所以不可随意设置
+        if (dy < 1) dy = 1;
         if (bottomView != null) {
+            LogUtil.i("LHD 设置bottomView的高度 = " + dy);
             bottomLp = bottomView.getLayoutParams();
             bottomLp.height = (int) dy;
             bottomView.setLayoutParams(bottomLp);
+        }
+
+        //0<dy<loadViewHeight 的时候是DefaultFootViewCreator.STATE_PULL_TO_RELEASE;
+        //dy>loadViewHeight 的时候是 DefaultFootViewCreator.STATE_RELEASE_TO_LOADING;
+        //dy = loadViewHeight的时候出发临界动画
+        //判断实时状态
+        int tempDy = (int) dy;
+//        LogUtil.i("LHD scollFoot = " + tempDy);
+        if (tempDy > loadViewHeight) {
+            tempState = DefaultFootViewCreator.STATE_RELEASE_TO_LOADING;
+        } else if (tempDy < loadViewHeight) {
+            tempState = DefaultFootViewCreator.STATE_PULL_TO_RELEASE;
+        }
+
+        //判断临界点动画
+        if (tempDy == loadViewHeight) {
+            LogUtil.i("LHD 判断临界点动画 = " + dy + "   " + tempState + "   loadViewHeight = " + loadViewHeight + "  tempDy = " + tempDy);
+            onLoadMoreFootViewCreator.executeAnim(tempState);
         }
     }
 
@@ -235,7 +258,10 @@ public class TestView extends RecyclerView {
     }
 
     /**
-     * 创建动画
+     * 创建回弹动画
+     *
+     * @param start bottomView的起始高度
+     * @param end   bottomView的结束高度为1,该view的高度不能为0，否则将无法判断是否已滑动到底部
      */
     public void createAnimatorTranslationY(final int start, final int end) {
         anim = ValueAnimator.ofInt(start, end);
@@ -244,23 +270,26 @@ public class TestView extends RecyclerView {
             @Override
             public void onAnimationUpdate(ValueAnimator valueAnimator) {
                 int value = (int) valueAnimator.getAnimatedValue();
-                LogUtil.i("LHD 开始执行回弹动画 = " + value + "   state = " + curState + "  start = " + start + "  end = " + end);
+                LogUtil.i("LHD 正在执行回弹动画 = " + value + "   state = " + curState + "  start = " + start + "  end = " + end);
                 value = Math.max(1, value);//bottomView的高度不能为0，否则将无法判断是否已滑动到底部
+                //value的高度决定了bottomView的高度，所以不可随意设置start和end的值，start和end的值必须为bottomView的高度值
                 scollFoot(value);
                 if (value == 1) {//value的最小值是1,说明回到了最初状态
                     curState = STATE_DEFAULT;
-                }
-//                else if (value > loadViewHeight) {//动画进行中的状态
-//                    curState = STATE_RELEASE_TO_LOAD;//松手加载
-//                }
-                else if (value == loadViewHeight) {//说明回到了刷新状态
+                    //将recyclerView的marginBottom值，使loadMoreView重新回到布局外面
+                    resetRecyclerView();
+                } else if (value == loadViewHeight) {//说明回到了刷新状态
                     curState = STATE_LOADING;
+                    LogUtil.i("LHD 说明回到了刷新状态 = " + curState);
                 }
-//                else {
-//                    curState = STATE_PULLING;//正在上拉
-//                }
+                //动画结束
                 if (value == end) {
-
+                    LogUtil.i("LHD 动画结束时的状态 = " + curState);
+                    if (curState == STATE_DEFAULT) {   //重置底部UI
+                        onLoadMoreFootViewCreator.finishLoading();
+                    } else { //改变底部UI为刷新中
+                        onLoadMoreFootViewCreator.loading();
+                    }
                 }
                 requestLayout();
             }
@@ -273,13 +302,20 @@ public class TestView extends RecyclerView {
      */
     public void finishLoadMore() {
         //回到起始位置
-        createAnimatorTranslationY((int) distance, 1);
+        createAnimatorTranslationY(loadViewHeight, 1);
     }
 
     private OnLoadMoreListener onLoadMoreListener;
 
     public void setOnLoadMoreListener(OnLoadMoreListener onLoadMoreListener) {
         this.onLoadMoreListener = onLoadMoreListener;
+    }
+
+    private void resetRecyclerView() {
+        ViewGroup.MarginLayoutParams marginLayoutParams = (ViewGroup.MarginLayoutParams) getLayoutParams();
+        LogUtil.i("resetRecyclerView = loadViewHeight = " + loadViewHeight);
+        marginLayoutParams.setMargins(marginLayoutParams.leftMargin, marginLayoutParams.topMargin, marginLayoutParams.rightMargin, -loadViewHeight - 1);
+        setLayoutParams(marginLayoutParams);
     }
 
 }
