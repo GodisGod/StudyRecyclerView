@@ -205,11 +205,14 @@ public class TestView extends RecyclerView {
         LogUtil.i("LHD startAction = " + curState);
         if (curState == STATE_PULLING) {
             //回到起始位置
-            createAnimatorTranslationY((int) distance, 0);
+            createAnimatorTranslationY((int) distance, 1);
         } else if (curState == STATE_RELEASE_TO_LOAD) {
             curState = STATE_LOADING;
             //进入刷新状态
             createAnimatorTranslationY((int) distance, loadViewHeight);
+            if (onLoadMoreListener != null) {
+                onLoadMoreListener.loading();
+            }
         }
     }
 
@@ -242,19 +245,20 @@ public class TestView extends RecyclerView {
             public void onAnimationUpdate(ValueAnimator valueAnimator) {
                 int value = (int) valueAnimator.getAnimatedValue();
                 LogUtil.i("LHD 开始执行回弹动画 = " + value + "   state = " + curState + "  start = " + start + "  end = " + end);
-//                if (curState == STATE_RELEASE_TO_LOAD) {
-//                    scollFoot(value);
-//                } else {
-//
-//                }
                 value = Math.max(1, value);//bottomView的高度不能为0，否则将无法判断是否已滑动到底部
                 scollFoot(value);
-                if (value == 1) {
+                if (value == 1) {//value的最小值是1,说明回到了最初状态
                     curState = STATE_DEFAULT;
-                } else {
-                    //todo
-//                    curState = STATE_LOADING;
                 }
+//                else if (value > loadViewHeight) {//动画进行中的状态
+//                    curState = STATE_RELEASE_TO_LOAD;//松手加载
+//                }
+                else if (value == loadViewHeight) {//说明回到了刷新状态
+                    curState = STATE_LOADING;
+                }
+//                else {
+//                    curState = STATE_PULLING;//正在上拉
+//                }
                 if (value == end) {
 
                 }
@@ -262,6 +266,20 @@ public class TestView extends RecyclerView {
             }
         });
         anim.start();
+    }
+
+    /**
+     * 结束刷新
+     */
+    public void finishLoadMore() {
+        //回到起始位置
+        createAnimatorTranslationY((int) distance, 1);
+    }
+
+    private OnLoadMoreListener onLoadMoreListener;
+
+    public void setOnLoadMoreListener(OnLoadMoreListener onLoadMoreListener) {
+        this.onLoadMoreListener = onLoadMoreListener;
     }
 
 }

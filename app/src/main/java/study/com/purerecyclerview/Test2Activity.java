@@ -13,9 +13,8 @@ import android.view.View;
 import java.util.ArrayList;
 import java.util.List;
 
-import study.com.purerecyclerview.customview.OnLoadListener;
+import study.com.purerecyclerview.customview.OnLoadMoreListener;
 import study.com.purerecyclerview.customview.TestView;
-import study.com.purerecyclerview.headfoot.HeadFootAdapter;
 import study.com.purerecyclerview.headfoot.HeadFootRealAdapter;
 
 public class Test2Activity extends AppCompatActivity {
@@ -41,6 +40,17 @@ public class Test2Activity extends AppCompatActivity {
         recyclerView.setAdapter(headFootRealAdapter);
         handler = new Handler();
 
+        recyclerView.setOnLoadMoreListener(new OnLoadMoreListener() {
+            @Override
+            public void loading() {
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        recyclerView.finishLoadMore();
+                    }
+                }, 3000);
+            }
+        });
     }
 
 }
