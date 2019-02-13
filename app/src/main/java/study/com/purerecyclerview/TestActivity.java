@@ -1,76 +1,52 @@
 package study.com.purerecyclerview;
 
 import android.os.Handler;
-import android.support.v4.view.ViewCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
-import android.view.View;
-import android.widget.FrameLayout;
-import android.widget.SimpleAdapter;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import study.com.purerecyclerview.customview.OnLoadMoreListener;
 import study.com.purerecyclerview.customview.LoadMoreRecyclerView;
-import study.com.purerecyclerview.freshlayout.adapter.LoadMoreAdapter;
-import study.com.purerecyclerview.freshlayout.adapter.RecyclerViewAdapter;
-import study.com.purerecyclerview.freshlayout.adapter.TestAdapter;
-import study.com.purerecyclerview.viewcreator.DefaultLoadFooterCreator;
-import study.com.purerecyclerview.viewcreator.LoadFooterCreator;
+import study.com.purerecyclerview.headfoot.HeadFootRealAdapter;
 
 public class TestActivity extends AppCompatActivity {
 
-    private FrameLayout framTop;
-    private int i = 0;
-    private RecyclerView recyclerView;
-    private RecyclerViewAdapter recyclerViewAdapter;
-    //    private RecyclerViewAdapter adapter;
-    private TestAdapter adapter;
+    private LoadMoreRecyclerView recyclerView;
     private List<String> list;
-
-    //自定义view
-    private LoadMoreRecyclerView loadMoreRecyclerView;
+    private HeadFootRealAdapter headFootRealAdapter;
+    private Handler handler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_test);
-        framTop = findViewById(R.id.fram_top);
-
-        loadMoreRecyclerView = findViewById(R.id.load_more_recycler_view);
         list = new ArrayList<>();
-        for (int i = 0; i < 10; i++) {
+
+        for (int i = 0; i < 4; i++) {
             list.add("PullToRefreshLayout" + i);
         }
-        adapter = new TestAdapter(list);
-        loadMoreRecyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
-        loadMoreRecyclerView.setAdapter(adapter);
-        initListener();
 
-//        LoadFooterCreator mLoadFooterCreator = new DefaultLoadFooterCreator();
-//        View mLoadView = mLoadFooterCreator.getLoadView(this, null);
-//        View mNoMoreView = mLoadFooterCreator.getNoMoreView(this, null);
-    }
+        headFootRealAdapter = new HeadFootRealAdapter(list);
+        recyclerView = findViewById(R.id.recycler_test2);
+        recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
+        recyclerView.setAdapter(headFootRealAdapter);
+        handler = new Handler();
 
-    private void initListener() {
-        findViewById(R.id.go_down).setOnClickListener(new View.OnClickListener() {
+        recyclerView.setOnLoadMoreListener(new OnLoadMoreListener() {
             @Override
-            public void onClick(View v) {
-//                ViewCompat.setTranslationY(framTop, (i = i + 2));
-//                recyclerView.scrollBy(0, (i = i + 5));
-            }
-        });
-        findViewById(R.id.go_top).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                for (int i = 0; i < 2; i++) {
-                    list.add("上拉加载更多" + i);
-                }
-                adapter.notifyDataSetChanged();
-//                ViewCompat.setTranslationY(framTop, (i = i - 2));
-//                recyclerView.scrollBy(0, (i = i - 5));
+            public void loading() {
+                handler.postDelayed(new Runnable() {
+                    @Override
+                    public void run() {
+                        for (int i = 0; i < 2; i++) {
+                            list.add("加载更多的数据" + i);
+                        }
+                        recyclerView.finishLoadMore(2);
+                    }
+                }, 1000);
             }
         });
     }

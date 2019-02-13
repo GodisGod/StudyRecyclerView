@@ -1,50 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".TestActivity">
 
-    <FrameLayout
-        android:id="@+id/fram_top"
-        android:layout_width="match_parent"
-        android:layout_height="10dp"
-        android:layout_marginTop="-20dp"
-        android:background="#0af"
-        android:orientation="horizontal">
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center_horizontal|bottom"
-            android:text="下拉刷新" />
-
-    </FrameLayout>
-
-    <!--<android.support.v7.widget.RecyclerView-->
-    <!--android:id="@+id/recycler_content"-->
-    <!--android:layout_width="match_parent"-->
-    <!--android:layout_height="match_parent"-->
-    <!--android:background="#6023" />-->
-
     <study.com.purerecyclerview.customview.LoadMoreRecyclerView
-        android:id="@+id/load_more_recycler_view"
+        android:id="@+id/recycler_test2"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="#eee" />
+        android:layout_height="match_parent" />
 
-    <Button
-        android:id="@+id/go_down"
-        android:layout_width="wrap_content"
-        android:layout_height="50dp"
-        android:layout_gravity="bottom|left"
-        android:text="向下" />
-
-    <Button
-        android:id="@+id/go_top"
-        android:layout_width="wrap_content"
-        android:layout_height="50dp"
-        android:layout_gravity="bottom|right"
-        android:text="向上" />
-
-</FrameLayout>
+</LinearLayout>

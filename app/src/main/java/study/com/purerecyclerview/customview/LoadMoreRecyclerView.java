@@ -1,30 +1,30 @@
 package study.com.purerecyclerview.customview;
 
-import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.Context;
-import android.graphics.Canvas;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.view.ViewCompat;
-import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
-import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
-import study.com.purerecyclerview.freshlayout.adapter.LoadMoreAdapter;
-import study.com.purerecyclerview.viewcreator.DefaultLoadFooterCreator;
-import study.com.purerecyclerview.viewcreator.LoadFooterCreator;
+import study.com.purerecyclerview.R;
+import study.com.purerecyclerview.freshlayout.adapter.HeadAndFootAdapter;
+import study.com.purerecyclerview.util.LogUtil;
 
 /**
- * Created by  HONGDA on 2019/1/9.
+ * Created by  HONGDA on 2019/1/10.
+ * 它不该为了兼容各种需求而变得臃肿
+ * 而应该为了实现某一个定制化的需求变得最精简
  */
 public class LoadMoreRecyclerView extends RecyclerView {
 
-    private int mState = STATE_DEFAULT;
+    //默认状态
+    private int curState = STATE_DEFAULT;
     //    初始
     public final static int STATE_DEFAULT = 0;
     //    正在上拉
@@ -35,35 +35,41 @@ public class LoadMoreRecyclerView extends RecyclerView {
     public final static int STATE_LOADING = 3;
     //     没有更多
     public final static int STATE_NO_MORE = 4;
+    //     加载完成
+    public final static int STATE_FINISH = 5;
 
     private float mLoadRatio = 0.5f;
 
-    //   位于加载View底部的view，通过改变其高度来上拉
+    private HeadAndFootAdapter headFootAdapter;
+    private Adapter realAdapter;
+
+    private View loadMoreView;
     private View bottomView;
-    //  加载尾部
-    private View mLoadView;
-    //  没有更多的尾部
-    private View mNoMoreView;
 
     //    用于测量高度的加载View
-    private int mLoadViewHeight = 0;
-    private float mFirstY = 0;
-    private boolean mPulling = false;
-    //    是否可以上拉加载
-    private boolean mLoadMoreEnable = true;
-    //    回弹动画
-    private ValueAnimator valueAnimator;
-    //    加载监听
-    private OnLoadListener mOnLoadListener;
-    //  加载
-    private LoadFooterCreator mLoadFooterCreator;
+    private int loadViewHeight = 0;
 
-    private LoadMoreAdapter loadMoreAdapter;
-    private Adapter realAdapter;
+    private float downY = 0;
+    private float distance = 0;
+    //这个标志位通过判断是否是滑动到底部后继续上拉的动作，来决定是否改变bottomView的高度
+    private boolean isBottom = false;//是否执行动画
+    private float ratio = 0.5f;//滑动距离和头部view下拉高度的比率，默认是3
+
+    private static int foot_height_max;//最大滑动距离
+    //回弹动画
+    private ValueAnimator anim;
+    //动画时间长度
+    private static final long ANIM_TIME = 300;
+
+    //用于记录滑动过程中,底部临界动画的触发
+    private int tempState = DefaultFootViewCreator.STATE_PULL_TO_RELEASE;
+
+    private OnLoadMoreFootViewCreator onLoadMoreFootViewCreator;
 
     public LoadMoreRecyclerView(@NonNull Context context) {
         this(context, null);
     }
+
 
     public LoadMoreRecyclerView(@NonNull Context context, @Nullable AttributeSet attrs) {
         this(context, attrs, 0);
@@ -74,124 +80,169 @@ public class LoadMoreRecyclerView extends RecyclerView {
         init(context);
     }
 
+    private void init(Context context) {
+        onLoadMoreFootViewCreator = new DefaultFootViewCreator();
+        loadMoreView = onLoadMoreFootViewCreator.getLoadMoreView(context);
+        //构建bottomView，无需开放给自定义footCreator
+        bottomView = new View(context);
+        ViewGroup.LayoutParams layoutParams = new LayoutParams(LayoutParams.MATCH_PARENT, 1);
+        //该view的高度不能为0，否则将无法判断是否已滑动到底部
+        bottomView.setLayoutParams(layoutParams);
+        //获取loadMoreView的高度
+        loadViewHeight = onLoadMoreFootViewCreator.getLoadMoreViewHeight(context);
+        foot_height_max = loadViewHeight * 4;
+    }
+
     @Override
     public void setAdapter(@Nullable Adapter adapter) {
         realAdapter = adapter;
-        loadMoreAdapter = new LoadMoreAdapter(getContext(), realAdapter);
-        super.setAdapter(loadMoreAdapter);
-        if (mLoadView != null) {
-            loadMoreAdapter.setLoadMoreView(mLoadView);
-            loadMoreAdapter.setBottomView(bottomView);
-        }
+        headFootAdapter = new HeadAndFootAdapter(realAdapter);
+        super.setAdapter(headFootAdapter);
+        addFooterView(loadMoreView);
+        addFooterView(bottomView);
+        //初始化loadView的位置
+        ViewGroup.MarginLayoutParams marginLayoutParams = (ViewGroup.MarginLayoutParams) getLayoutParams();
+//        LogUtil.i("setAdapter = loadViewHeight = " + loadViewHeight + "   marginLayoutParams.bottomMargin = " + marginLayoutParams.bottomMargin);
+        marginLayoutParams.setMargins(marginLayoutParams.leftMargin, marginLayoutParams.topMargin, marginLayoutParams.rightMargin, marginLayoutParams.bottomMargin - loadViewHeight - 1);
+        setLayoutParams(marginLayoutParams);
     }
 
-    private void init(Context context) {
-        Log.i("LHD", "loadmoreview init");
-        if (bottomView == null) {
-            bottomView = new View(context);
-//            该view的高度不能为0，否则将无法判断是否已滑动到底部
-            bottomView.setLayoutParams(new LayoutParams(LayoutParams.MATCH_PARENT, 1));
-//            初始化默认的刷新头部
-            mLoadFooterCreator = new DefaultLoadFooterCreator();
-            //初始化的时候必须传入recyclerView,否则在onMeasure的时候是取不到mLoadView.getLayoutParams()的
-            //同时要注意在将recyclerview作为父布局传入loadview和noremoreView的时候一定要先设置Layoutmanager
-            setLayoutManager(new LinearLayoutManager(getContext(), LinearLayoutManager.VERTICAL, false));
-            mLoadView = mLoadFooterCreator.getLoadView(context, this);
-            mNoMoreView = mLoadFooterCreator.getNoMoreView(context, this);
+    public void addFooterView(View view) {
+        if (null == view) {
+            throw new IllegalArgumentException("the view to add must not be null !");
+        } else if (headFootAdapter == null) {
+            throw new IllegalStateException("u must set a adapter first !");
+        } else {
+            headFootAdapter.addFootView(view);
         }
-    }
-
-    @Override
-    protected void onMeasure(int widthSpec, int heightSpec) {
-        if (mLoadView != null && mLoadViewHeight == 0) {
-            mLoadView.measure(0, 0);
-            //初始化的时候必须传入recyclerView,否则是取不到mLoadView.getLayoutParams()的
-            mLoadViewHeight = mLoadView.getLayoutParams().height;
-            ViewGroup.MarginLayoutParams marginLayoutParams = (ViewGroup.MarginLayoutParams) getLayoutParams();
-            marginLayoutParams.setMargins(marginLayoutParams.leftMargin, marginLayoutParams.topMargin, marginLayoutParams.rightMargin, marginLayoutParams.bottomMargin - mLoadViewHeight - 1);
-            setLayoutParams(marginLayoutParams);
-        }
-        super.onMeasure(widthSpec, heightSpec);
-    }
-
-    /**
-     * 隐藏加载尾部
-     */
-    @Override
-    public void onDraw(Canvas c) {
-        super.onDraw(c);
-//        if (mLoadView == null) return;
-////        若数据不满一屏
-//        if (getAdapter() == null) return;
-//        if (getChildCount() >= getAdapter().getItemCount()) {
-//            if (mLoadView.getVisibility() != GONE) {
-//                mLoadView.setVisibility(GONE);
-//                mState = STATE_DEFAULT;
-//                replyPull();
-//            }
-//        } else {
-//            if (mLoadView.getVisibility() != VISIBLE) {
-//                mLoadView.setVisibility(VISIBLE);
-//                mState = STATE_DEFAULT;
-//                replyPull();
-//            }
-//        }
     }
 
     @Override
     public boolean onTouchEvent(MotionEvent e) {
-////        若不允许拖动
-//        if (!mLoadMoreEnable) return super.onTouchEvent(e);
-////        若加载尾部为空，不处理
-//        if (mLoadView == null)
-//            return super.onTouchEvent(e);
-////        若当前加载尾部被隐藏(不足一屏)
-//        if (mLoadView.getVisibility() != VISIBLE)
-//            return super.onTouchEvent(e);
-//
-////        若回弹动画正在进行，不处理
-//        if (valueAnimator != null && valueAnimator.isRunning())
-//            return super.onTouchEvent(e);
-//        if (mLoadViewHeight == 0) {
-//            mLoadViewHeight = mLoadView.getMeasuredHeight();
-//        }
-//
-//        switch (e.getAction()) {
-//            case MotionEvent.ACTION_MOVE:
-//                if (!mPulling) {
-//                    if (isBottom()) {
-////                        当listview滑动到最低部时，记录当前y坐标
-//                        mFirstY = e.getRawY();
-//                    }
-////                    若listview没有滑动到最低部，不处理
-//                    else
-//                        break;
-//                }
-//                float distance = (int) ((mFirstY - e.getRawY()) * mLoadRatio);
-////                若向上滑动(此时加载胃部已隐藏)，不处理
-//                if (distance < 0) break;
-//                mPulling = true;
-////                若加载中，距离需加上尾部的高度
-//                if (mState == STATE_LOADING) {
-//                    distance += mLoadViewHeight;
-//                }
-//                setState(distance);
-//                return true;
-//            case MotionEvent.ACTION_CANCEL:
-//            case MotionEvent.ACTION_UP:
-//                replyPull();
-//                break;
-//        }
+
+        //正在执行动画不处理
+        if (anim != null && anim.isRunning()) {
+            return super.onTouchEvent(e);
+        }
+        //正在加载数据不处理
+        if (curState == STATE_LOADING) {
+            return super.onTouchEvent(e);
+        }
+
+        switch (e.getAction()) {
+            case MotionEvent.ACTION_DOWN:
+                curState = STATE_DEFAULT;
+                LogUtil.i("LHD  MotionEvent.ACTION_DOWN " + isBottom());
+                isBottom = isBottom();//记录是否处理抬起的手势
+                if (isBottom) {//如果沒有滑动到底部不处理
+                    downY = e.getRawY();
+                } else {
+                    break;
+                }
+                break;
+            case MotionEvent.ACTION_MOVE:
+                if (!isBottom) return super.onTouchEvent(e);
+                float dy = (e.getRawY() - downY) * ratio;
+//                LogUtil.i("LHD 计算dy1 = " + dy + "   currentY = " + currentY + "   downY = " + downY);
+                if (dy < 0) {
+                    dy = Math.min(foot_height_max, Math.abs(dy));
+                    dy = Math.max(0, Math.abs(dy));
+                    LogUtil.i("LHD 计算dy2 = " + dy + "  downY = " + downY);
+                    //滑动footView
+                    scollFoot(dy);
+                    //当手指先向上滑动再向下滑动的时候,bottomView的高度变化了，当同时recyclerView也在向下位移
+                    //为了始终保持recyclerView在最底部，所以需要同步位移recyclerView，来保持bottomView不会划出界外
+                    scrollToPosition(getLayoutManager().getItemCount() - 1);
+                }
+                break;
+            case MotionEvent.ACTION_CANCEL:
+            case MotionEvent.ACTION_UP:
+                //如果不是滑动到底部的抬起动作，则不处理
+                LogUtil.i("LHD  MotionEvent.ACTION_UP + " + isBottom);
+                if (isBottom) {
+                    float dy2 = (e.getRawY() - downY) * ratio;
+                    if (dy2 > 0) break;//如果是滑动到底部以后，再往上滑动，则不处理
+                    distance = Math.abs(dy2);
+                    LogUtil.i("LHD 计算dy3 = " + distance);
+                    checkState(distance);
+                    if (distance > 0) {
+                        startAction();
+                    }
+                }
+                break;
+        }
+//        LogUtil.i("LHD 传递触摸事件");
         return super.onTouchEvent(e);
     }
 
-    @Override
-    protected void onDetachedFromWindow() {
-        if (mLoadFooterCreator != null) {
-            mLoadFooterCreator.onStopLoad();
+    /**
+     * 根据上拉距离检查状态
+     *
+     * @param dy
+     */
+    private void checkState(float dy) {
+        if (dy >= loadViewHeight) {
+            //释放刷新
+            curState = STATE_RELEASE_TO_LOAD;
+        } else {
+            //上拉加载更多
+            curState = STATE_PULLING;
         }
-        super.onDetachedFromWindow();
     }
+
+    /**
+     * 核心方法
+     * 根据上拉的距离判断状态，执行不同的动画
+     * 状态1：上拉中未触发刷新，上拉->刷新->结束刷新
+     * 状态2：触发刷新，上拉->结束刷新
+     */
+    private void startAction() {
+        LogUtil.i("LHD startAction = " + curState);
+        if (curState == STATE_PULLING) {
+            //回到起始位置
+            createAnimatorTranslationY((int) distance, 1);
+        } else if (curState == STATE_RELEASE_TO_LOAD) {
+            curState = STATE_LOADING;
+            //进入刷新状态
+            createAnimatorTranslationY((int) distance, loadViewHeight);
+            if (onLoadMoreListener != null) {
+                onLoadMoreListener.loading();
+            }
+        }
+    }
+
+    private ViewGroup.LayoutParams bottomLp;
+
+    private void scollFoot(float dy) {
+        //该view的高度不能为0，否则将无法判断是否已滑动到底部
+        //dy的高度决定了bottomView的高度，所以不可随意设置
+        if (dy < 1) dy = 1;
+        if (bottomView != null) {
+            LogUtil.i("LHD 设置bottomView的高度 = " + dy);
+            bottomLp = bottomView.getLayoutParams();
+            bottomLp.height = (int) dy;
+            bottomView.setLayoutParams(bottomLp);
+        }
+
+        //0<dy<loadViewHeight 的时候是DefaultFootViewCreator.STATE_PULL_TO_RELEASE;
+        //dy>loadViewHeight 的时候是 DefaultFootViewCreator.STATE_RELEASE_TO_LOADING;
+        //dy = loadViewHeight的时候出发临界动画
+        //判断实时状态
+        int tempDy = (int) dy;
+//        LogUtil.i("LHD scollFoot = " + tempDy);
+        if (tempDy > loadViewHeight) {
+            tempState = DefaultFootViewCreator.STATE_RELEASE_TO_LOADING;
+        } else if (tempDy < loadViewHeight) {
+            tempState = DefaultFootViewCreator.STATE_PULL_TO_RELEASE;
+        }
+
+        //判断临界点动画
+        if (tempDy == loadViewHeight) {
+            LogUtil.i("LHD 判断临界点动画 = " + dy + "   " + tempState + "   loadViewHeight = " + loadViewHeight + "  tempDy = " + tempDy);
+            onLoadMoreFootViewCreator.executeAnim(tempState);
+        }
+    }
+
 
     /**
      * 判断是否滑动到底部
@@ -201,180 +252,67 @@ public class LoadMoreRecyclerView extends RecyclerView {
     }
 
     /**
-     * 判断当前是拖动中还是松手刷新
-     * 刷新中不在此处判断，在手指抬起时才判断
+     * 创建回弹动画
+     *
+     * @param start bottomView的起始高度
+     * @param end   bottomView的结束高度为1,该view的高度不能为0，否则将无法判断是否已滑动到底部
      */
-    private int lastState;
-
-    private void setState(float distance) {
-//        刷新中/没有更多，状态不变
-        if (mState == STATE_LOADING || mState == STATE_NO_MORE) {
-
-        } else if (distance == 0) {
-            mState = STATE_DEFAULT;
-        }
-//        松手刷新
-        else if (Math.abs(distance) >= mLoadViewHeight) {
-            lastState = mState;
-            mState = STATE_RELEASE_TO_LOAD;
-            if (mLoadFooterCreator != null)
-                if (!mLoadFooterCreator.onReleaseToLoad(distance, lastState))
-                    return;
-        }
-//        正在拖动
-        else if (Math.abs(distance) < mLoadViewHeight) {
-            lastState = mState;
-            mState = STATE_PULLING;
-            if (mLoadFooterCreator != null)
-                if (!mLoadFooterCreator.onStartPull(distance, lastState))
-                    return;
-        }
-        startPull(distance);
-        scrollToPosition(getLayoutManager().getItemCount() - 1);
-    }
-
-    /**
-     * 拖动或回弹时，改变低部的margin
-     */
-    private ViewGroup.LayoutParams layoutParams;
-
-    private void startPull(float distance) {
-//            该view的高度不能为0，否则将无法判断是否已滑动到底部
-        if (distance < 1)
-            distance = 1;
-        if (bottomView != null) {
-            layoutParams = bottomView.getLayoutParams();
-            layoutParams.height = (int) distance;
-            bottomView.setLayoutParams(layoutParams);
-        }
-    }
-
-    /**
-     * 松手回弹
-     */
-    private void replyPull() {
-        mPulling = false;
-//        回弹位置
-        float destinationY = 0;
-//        判断当前状态
-//        若是刷新中，回弹
-        if (mState == STATE_LOADING) {
-            destinationY = mLoadViewHeight;
-        }
-//        若是松手刷新，刷新，回弹
-        else if (mState == STATE_RELEASE_TO_LOAD) {
-//            改变状态
-            mState = STATE_LOADING;
-//            刷新
-            if (mOnLoadListener != null)
-                mOnLoadListener.onStartLoading(realAdapter.getItemCount());
-            if (mLoadFooterCreator != null)
-                mLoadFooterCreator.onStartLoading();
-//            若在onStartRefreshing中调用了completeRefresh方法，将不会滚回初始位置，因此这里需加个判断
-            if (mState != STATE_LOADING) return;
-            destinationY = mLoadViewHeight;
-        } else if (mState == STATE_DEFAULT || mState == STATE_PULLING) {
-            mState = STATE_DEFAULT;
-        }
-
-        LayoutParams layoutParams = (RecyclerView.LayoutParams) bottomView.getLayoutParams();
-        float distance = layoutParams.height;
-        if (distance <= 0) return;
-
-        valueAnimator = ObjectAnimator.ofFloat(distance, destinationY).setDuration((long) (distance * 0.5));
-        valueAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+    public void createAnimatorTranslationY(final int start, final int end) {
+        anim = ValueAnimator.ofInt(start, end);
+        anim.setDuration(ANIM_TIME);
+        anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override
-            public void onAnimationUpdate(ValueAnimator animation) {
-                float nowDistance = (float) animation.getAnimatedValue();
-                startPull(nowDistance);
+            public void onAnimationUpdate(ValueAnimator valueAnimator) {
+                int value = (int) valueAnimator.getAnimatedValue();
+                LogUtil.i("LHD 正在执行回弹动画 = " + value + "   state = " + curState + "  start = " + start + "  end = " + end);
+                value = Math.max(1, value);//bottomView的高度不能为0，否则将无法判断是否已滑动到底部
+                //value的高度决定了bottomView的高度，所以不可随意设置start和end的值，start和end的值必须为bottomView的高度值
+                scollFoot(value);
+                if (value == 1) {//value的最小值是1,说明回到了最初状态
+                    curState = STATE_DEFAULT;
+                    resetRecyclerView();
+                } else if (value == loadViewHeight) {//说明回到了刷新状态
+                    curState = STATE_LOADING;
+                    LogUtil.i("LHD 说明回到了刷新状态 = " + curState);
+                }
+                //动画结束
+                if (value == end) {
+                    LogUtil.i("LHD 动画结束时的状态 = " + curState);
+                    if (curState == STATE_DEFAULT) {   //重置底部UI
+                        onLoadMoreFootViewCreator.finishLoading();
+                    } else { //改变底部UI为刷新中
+                        onLoadMoreFootViewCreator.loading();
+                    }
+                }
+                requestLayout();
             }
         });
-        valueAnimator.start();
+        anim.start();
     }
 
     /**
      * 结束刷新
      */
-    public void completeLoad(int loadItemCount) {
-        if (mLoadFooterCreator != null)
-            mLoadFooterCreator.onStopLoad();
-        mState = STATE_DEFAULT;
-        replyPull();
-
-        int startItem = realAdapter.getItemCount() + loadMoreAdapter.getHeadCount() - loadItemCount;
-        loadMoreAdapter.notifyItemRangeInserted(startItem, loadItemCount);
+    public void finishLoadMore(int newItemSize) {
+        //回到起始位置
+        createAnimatorTranslationY(loadViewHeight, 1);
+        int startItem = realAdapter.getItemCount() + headFootAdapter.getHeadCount() - newItemSize;
+        headFootAdapter.notifyItemRangeInserted(startItem, newItemSize);
     }
 
-    /**
-     * 设置监听
-     */
-    public void setOnLoadListener(OnLoadListener onLoadListener) {
-        this.mOnLoadListener = onLoadListener;
+    private OnLoadMoreListener onLoadMoreListener;
+
+    public void setOnLoadMoreListener(OnLoadMoreListener onLoadMoreListener) {
+        this.onLoadMoreListener = onLoadMoreListener;
     }
 
-    /**
-     * 设置自定义的加载尾部
-     */
-    public void setLoadViewCreator(LoadFooterCreator loadViewCreator) {
-        if (loadViewCreator == null) {
-            throw new IllegalArgumentException("the LoadViewCreator must not be null");
-        } else {
-            this.mLoadFooterCreator = loadViewCreator;
-            mLoadView = loadViewCreator.getLoadView(getContext(), this);
-            if (loadMoreAdapter != null) {
-                loadMoreAdapter.setLoadMoreView(mLoadView);
-            }
-            mNoMoreView = loadViewCreator.getNoMoreView(getContext(), this);
-        }
-    }
-
-    /**
-     * 设置没有更多了
-     */
-    public void setNoMore(boolean noMore) {
-        this.mState = noMore ? STATE_NO_MORE : STATE_DEFAULT;
-        if (noMore) {
-            if (mNoMoreView != null) {
-                loadMoreAdapter.setLoadMoreView(mNoMoreView);
-//                重新测量底部
-                mNoMoreView.measure(0, 0);
-                ViewGroup.MarginLayoutParams marginLayoutParams = (ViewGroup.MarginLayoutParams) getLayoutParams();
-                marginLayoutParams.setMargins(marginLayoutParams.leftMargin, marginLayoutParams.topMargin, marginLayoutParams.rightMargin, -mNoMoreView.getLayoutParams().height - 1);
-                setLayoutParams(marginLayoutParams);
-            }
-        } else if (mLoadView != null) {
-            loadMoreAdapter.setLoadMoreView(mLoadView);
-            ViewGroup.MarginLayoutParams marginLayoutParams = (ViewGroup.MarginLayoutParams) getLayoutParams();
-            marginLayoutParams.setMargins(marginLayoutParams.leftMargin, marginLayoutParams.topMargin, marginLayoutParams.rightMargin, -mLoadViewHeight - 1);
-            setLayoutParams(marginLayoutParams);
-        }
-    }
-
-    /**
-     * 获得加载中View和底部填充view的个数，用于绘制分割线
-     */
-    public int getLoadViewCount() {
-        if (mLoadView != null)
-            return 2;
-        return 0;
-    }
-
-    public void setLoadEnable(boolean loadMoreEnable) {
-        this.mLoadMoreEnable = loadMoreEnable;
-    }
-
-    /**
-     * 获得真正的adapter
-     */
-    public Adapter getRealAdapter() {
-        return realAdapter;
-    }
-
-    /**
-     * 设置下拉阻尼系数
-     */
-    public void setPullLoadRatio(float loadRatio) {
-        this.mLoadRatio = loadRatio;
+    private void resetRecyclerView() {
+//        ViewGroup.MarginLayoutParams marginLayoutParams = (ViewGroup.MarginLayoutParams) getLayoutParams();
+//        LogUtil.i("resetRecyclerView = loadViewHeight = " + loadViewHeight);
+//        marginLayoutParams.setMargins(marginLayoutParams.leftMargin, marginLayoutParams.topMargin, marginLayoutParams.rightMargin, -loadViewHeight - 1);
+//        setLayoutParams(marginLayoutParams);
+        //别忘了重置标志位
+        isBottom = false;
     }
 
 }

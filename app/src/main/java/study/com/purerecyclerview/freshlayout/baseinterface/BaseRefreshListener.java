@@ -1,4 +1,4 @@
-package study.com.purerecyclerview.freshlayout;
+package study.com.purerecyclerview.freshlayout.baseinterface;
 
 /**
  * Created by jiang on 16/8/18.

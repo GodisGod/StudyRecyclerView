@@ -13,8 +13,8 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
 import study.com.purerecyclerview.R;
-import study.com.purerecyclerview.freshlayout.BaseRefreshListener;
-import study.com.purerecyclerview.freshlayout.FooterView;
+import study.com.purerecyclerview.freshlayout.baseinterface.BaseRefreshListener;
+import study.com.purerecyclerview.freshlayout.baseinterface.FooterView;
 import study.com.purerecyclerview.freshlayout.HeadRefreshView;
 import study.com.purerecyclerview.freshlayout.LoadMoreView;
 import study.com.purerecyclerview.freshlayout.State;

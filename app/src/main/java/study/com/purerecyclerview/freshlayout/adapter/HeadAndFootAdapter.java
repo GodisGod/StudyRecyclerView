@@ -12,7 +12,7 @@ import android.view.ViewGroup;
 /**
  * Created by  HONGDA on 2018/12/24.
  */
-public abstract class HeadAndFootAdapter<T extends RecyclerView.Adapter> extends RecyclerView.Adapter {
+public class HeadAndFootAdapter<T extends RecyclerView.Adapter> extends RecyclerView.Adapter {
 
     private static int BASE_ITEM_TYPE_HEAD = 1000;
     private static int BASE_ITEM_TYPE_FOOT = 2000;

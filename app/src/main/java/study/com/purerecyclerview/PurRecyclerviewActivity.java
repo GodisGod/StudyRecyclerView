@@ -10,17 +10,15 @@ import android.widget.CheckBox;
 import java.util.ArrayList;
 import java.util.List;
 
-import study.com.purerecyclerview.freshlayout.BaseRefreshListener;
-import study.com.purerecyclerview.freshlayout.layout.PureRefreshLayout;
-import study.com.purerecyclerview.freshlayout.adapter.RecyclerViewAdapter;
-import study.com.purerecyclerview.freshlayout.layout.PureRefreshLayout2;
+import study.com.purerecyclerview.freshlayout.baseinterface.BaseRefreshListener;
+import study.com.purerecyclerview.freshlayout.adapter.TestAdapter;
 import study.com.purerecyclerview.freshlayout.layout.PureRefreshLayout3;
 
 public class PurRecyclerviewActivity extends AppCompatActivity {
 
     private PureRefreshLayout3 pullToRefreshLayout;
     private RecyclerView recyclerView;
-    private RecyclerViewAdapter adapter;
+    private TestAdapter adapter;
     private List<String> list;
     private CheckBox checkBox;
 
@@ -39,7 +37,7 @@ public class PurRecyclerviewActivity extends AppCompatActivity {
             list.add("PullToRefreshLayout" + i);
         }
 
-        adapter = new RecyclerViewAdapter(list);
+        adapter = new TestAdapter(list);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(adapter);

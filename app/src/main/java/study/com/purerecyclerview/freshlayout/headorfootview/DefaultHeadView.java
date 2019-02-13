@@ -1,7 +1,8 @@
-package study.com.purerecyclerview.freshlayout.head;
+package study.com.purerecyclerview.freshlayout.headorfootview;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.FrameLayout;
@@ -10,31 +11,32 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import study.com.purerecyclerview.R;
-import study.com.purerecyclerview.freshlayout.FooterView;
+import study.com.purerecyclerview.freshlayout.baseinterface.HeadView;
 
 /**
- * Created by  HONGDA on 2018/12/17.
+ * Created by  HONGDA on 2018/12/19.
  */
-public class DefaultFootView extends FrameLayout implements FooterView {
+public class DefaultHeadView extends FrameLayout implements HeadView {
     private TextView tvTip;
     private ImageView arrow;
     private ProgressBar progressBar;
 
-    public DefaultFootView(Context context) {
+    public DefaultHeadView(Context context) {
         this(context, null);
     }
 
-    public DefaultFootView(Context context, AttributeSet attrs) {
+    public DefaultHeadView(Context context, AttributeSet attrs) {
         this(context, attrs, 0);
     }
 
-    public DefaultFootView(Context context, AttributeSet attrs, int defStyleAttr) {
+    public DefaultHeadView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
-        View view = LayoutInflater.from(context).inflate(R.layout.layout_default_footer, null);
+        Log.i("LHD", "DefaultHeadView  init");
+        View view = LayoutInflater.from(context).inflate(R.layout.layout_default_header, null);
         addView(view);
-        tvTip = view.findViewById(R.id.header_tv);
-        arrow = view.findViewById(R.id.header_arrow);
-        progressBar = view.findViewById(R.id.header_progress);
+        tvTip = (TextView) view.findViewById(R.id.header_tv);
+        arrow = (ImageView) view.findViewById(R.id.header_arrow);
+        progressBar = (ProgressBar) view.findViewById(R.id.header_progress);
     }
 
     @Override
@@ -45,11 +47,11 @@ public class DefaultFootView extends FrameLayout implements FooterView {
     @Override
     public void progress(float progress, float all) {
         if (progress >= all) {
-            tvTip.setText("松开加载更多");
-            arrow.setRotation(0);
-        } else {
-            tvTip.setText("上拉加载");
+            tvTip.setText("松开刷新");
             arrow.setRotation(180);
+        } else {
+            tvTip.setText("下拉加载");
+            arrow.setRotation(0);
         }
     }
 
@@ -62,19 +64,18 @@ public class DefaultFootView extends FrameLayout implements FooterView {
     public void loading() {
         arrow.setVisibility(GONE);
         progressBar.setVisibility(VISIBLE);
-        tvTip.setText("加载中...");
+        tvTip.setText("刷新中...");
     }
 
     @Override
     public void normal() {
         arrow.setVisibility(VISIBLE);
         progressBar.setVisibility(GONE);
-        tvTip.setText("上拉加载");
+        tvTip.setText("下拉刷新");
     }
 
     @Override
     public View getView() {
         return this;
     }
-
 }

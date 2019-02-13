@@ -1,4 +1,4 @@
-package study.com.purerecyclerview.freshlayout;
+package study.com.purerecyclerview.freshlayout.baseinterface;
 
 import android.view.View;
 import android.widget.FrameLayout;

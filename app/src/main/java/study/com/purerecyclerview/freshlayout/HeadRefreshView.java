@@ -11,6 +11,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import study.com.purerecyclerview.R;
+import study.com.purerecyclerview.freshlayout.baseinterface.HeadView;
 
 /**
  * Created by  HONGDA on 2018/12/17.

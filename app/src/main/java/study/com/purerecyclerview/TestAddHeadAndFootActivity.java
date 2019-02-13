@@ -12,7 +12,7 @@ import android.view.View;
 import java.util.ArrayList;
 import java.util.List;
 
-import study.com.purerecyclerview.headfoot.HeadFootAdapter;
+import study.com.purerecyclerview.freshlayout.adapter.HeadAndFootAdapter;
 import study.com.purerecyclerview.headfoot.HeadFootRealAdapter;
 
 public class TestAddHeadAndFootActivity extends AppCompatActivity {
@@ -20,7 +20,7 @@ public class TestAddHeadAndFootActivity extends AppCompatActivity {
     private RecyclerView recyclerView;
     private List<String> list;
     private HeadFootRealAdapter headFootRealAdapter;
-    private HeadFootAdapter headFootAdapter;
+    private HeadAndFootAdapter headFootAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,7 +36,7 @@ public class TestAddHeadAndFootActivity extends AppCompatActivity {
         }
 
         headFootRealAdapter = new HeadFootRealAdapter(list);
-        headFootAdapter = new HeadFootAdapter(headFootRealAdapter);
+        headFootAdapter = new HeadAndFootAdapter(headFootRealAdapter);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
         recyclerView.setLayoutManager(new GridLayoutManager(this, 4));
