@@ -108,8 +108,7 @@ public class TestView extends RecyclerView {
         //初始化loadView的位置
         ViewGroup.MarginLayoutParams marginLayoutParams = (ViewGroup.MarginLayoutParams) getLayoutParams();
 //        LogUtil.i("setAdapter = loadViewHeight = " + loadViewHeight + "   marginLayoutParams.bottomMargin = " + marginLayoutParams.bottomMargin);
-//        marginLayoutParams.setMargins(marginLayoutParams.leftMargin, marginLayoutParams.topMargin, marginLayoutParams.rightMargin, marginLayoutParams.bottomMargin - loadViewHeight - 1);
-        marginLayoutParams.setMargins(marginLayoutParams.leftMargin, marginLayoutParams.topMargin, marginLayoutParams.rightMargin, 20);
+        marginLayoutParams.setMargins(marginLayoutParams.leftMargin, marginLayoutParams.topMargin, marginLayoutParams.rightMargin, marginLayoutParams.bottomMargin - loadViewHeight - 1);
         setLayoutParams(marginLayoutParams);
     }
 
@@ -151,11 +150,14 @@ public class TestView extends RecyclerView {
                 float dy = (e.getRawY() - downY) * ratio;
 //                LogUtil.i("LHD 计算dy1 = " + dy + "   currentY = " + currentY + "   downY = " + downY);
                 if (dy < 0) {
-//                    dy = Math.min(foot_height_max, Math.abs(dy));
+                    dy = Math.min(foot_height_max, Math.abs(dy));
                     dy = Math.max(0, Math.abs(dy));
                     LogUtil.i("LHD 计算dy2 = " + dy + "  downY = " + downY);
                     //滑动footView
                     scollFoot(dy);
+                    //当手指先向上滑动再向下滑动的时候,bottomView的高度变化了，当同时recyclerView也在向下位移
+                    //为了始终保持recyclerView在最底部，所以需要同步位移recyclerView，来保持bottomView不会划出界外
+                    scrollToPosition(getLayoutManager().getItemCount() - 1);
                 }
                 break;
             case MotionEvent.ACTION_CANCEL:
@@ -244,10 +246,6 @@ public class TestView extends RecyclerView {
             LogUtil.i("LHD 判断临界点动画 = " + dy + "   " + tempState + "   loadViewHeight = " + loadViewHeight + "  tempDy = " + tempDy);
             onLoadMoreFootViewCreator.executeAnim(tempState);
         }
-
-        //当手指先向上滑动再向下滑动的时候,bottomView的高度变化了，当同时recyclerView也在向下位移
-        //为了始终保持recyclerView在最底部，所以需要同步位移recyclerView，来保持bottomView不会划出界外
-        scrollToPosition(getLayoutManager().getItemCount() - 1);
     }
 
 
@@ -277,7 +275,6 @@ public class TestView extends RecyclerView {
                 scollFoot(value);
                 if (value == 1) {//value的最小值是1,说明回到了最初状态
                     curState = STATE_DEFAULT;
-                    //将recyclerView的marginBottom值，使loadMoreView重新回到布局外面
                     resetRecyclerView();
                 } else if (value == loadViewHeight) {//说明回到了刷新状态
                     curState = STATE_LOADING;
@@ -301,9 +298,11 @@ public class TestView extends RecyclerView {
     /**
      * 结束刷新
      */
-    public void finishLoadMore() {
+    public void finishLoadMore(int newItemSize) {
         //回到起始位置
         createAnimatorTranslationY(loadViewHeight, 1);
+        int startItem = realAdapter.getItemCount() + headFootAdapter.getHeadCount() - newItemSize;
+        headFootAdapter.notifyItemRangeInserted(startItem, newItemSize);
     }
 
     private OnLoadMoreListener onLoadMoreListener;
@@ -313,10 +312,10 @@ public class TestView extends RecyclerView {
     }
 
     private void resetRecyclerView() {
-        ViewGroup.MarginLayoutParams marginLayoutParams = (ViewGroup.MarginLayoutParams) getLayoutParams();
-        LogUtil.i("resetRecyclerView = loadViewHeight = " + loadViewHeight);
-        marginLayoutParams.setMargins(marginLayoutParams.leftMargin, marginLayoutParams.topMargin, marginLayoutParams.rightMargin, 20);
-        setLayoutParams(marginLayoutParams);
+//        ViewGroup.MarginLayoutParams marginLayoutParams = (ViewGroup.MarginLayoutParams) getLayoutParams();
+//        LogUtil.i("resetRecyclerView = loadViewHeight = " + loadViewHeight);
+//        marginLayoutParams.setMargins(marginLayoutParams.leftMargin, marginLayoutParams.topMargin, marginLayoutParams.rightMargin, -loadViewHeight - 1);
+//        setLayoutParams(marginLayoutParams);
         //别忘了重置标志位
         isBottom = false;
     }

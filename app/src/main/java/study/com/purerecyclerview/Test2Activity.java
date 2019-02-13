@@ -49,8 +49,7 @@ public class Test2Activity extends AppCompatActivity {
                         for (int i = 0; i < 2; i++) {
                             list.add("加载更多的数据" + i);
                         }
-                        headFootRealAdapter.notifyDataSetChanged();
-                        recyclerView.finishLoadMore();
+                        recyclerView.finishLoadMore(2);
                     }
                 }, 1000);
             }
