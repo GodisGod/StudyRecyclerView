@@ -26,7 +26,6 @@ public abstract class HeadAndFootAdapter<T extends RecyclerView.Adapter> extends
     public HeadAndFootAdapter(T realAdapter) {
         //别忘记调用父类的构造函数
         super();
-        Log.i("LHD", "HeadAndFootAdapter初始化");
         headViews = new SparseArrayCompat<>();
         footViews = new SparseArrayCompat<>();
         this.realAdapter = realAdapter;

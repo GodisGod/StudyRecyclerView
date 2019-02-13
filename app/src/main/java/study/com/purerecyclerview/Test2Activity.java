@@ -52,7 +52,7 @@ public class Test2Activity extends AppCompatActivity {
                         headFootRealAdapter.notifyDataSetChanged();
                         recyclerView.finishLoadMore();
                     }
-                }, 3000);
+                }, 1000);
             }
         });
     }
