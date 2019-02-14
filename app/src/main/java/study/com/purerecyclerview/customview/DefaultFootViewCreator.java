@@ -12,6 +12,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import study.com.purerecyclerview.R;
+import study.com.purerecyclerview.util.LogUtil;
 
 /**
  * Created by  鸿达 on 2019/2/12.
@@ -31,15 +32,15 @@ public class DefaultFootViewCreator implements OnLoadMoreFootViewCreator {
     //mark = false，由上拉加载变为下拉刷新执行动画
     //mark = true，由下拉刷新变为上拉加载执行动画
 //    private final boolean mark = false;
-    public final static int STATE_RELEASE_TO_LOADING = 1;//由下拉刷新变为上拉加载执行动画
-    public final static int STATE_PULL_TO_RELEASE = 2;//由上拉加载变为下拉刷新执行动画
+//    public final static int STATE_RELEASE_TO_LOADING = 1;//由下拉刷新变为上拉加载执行动画
+//    public final static int STATE_PULL_TO_RELEASE = 2;//由上拉加载变为下拉刷新执行动画
 
     //STATE_DEFAULT->STATE_PULLING->STATE_RELEASE_TO_LOAD
     @Override
     public void startPull(float distance) {
         switchImg(false);
         imgArrow.setImageResource(R.drawable.arrow_down);
-        imgArrow.setRotation(-180f);
+        imgArrow.setRotation(0f);
         tvTip.setText("上拉加载");
     }
 
@@ -47,19 +48,18 @@ public class DefaultFootViewCreator implements OnLoadMoreFootViewCreator {
     public void releaseToLoadMore(float distance) {
         switchImg(false);
         imgArrow.setImageResource(R.drawable.arrow_down);
-        imgArrow.setRotation(0f);
+        imgArrow.setRotation(-180f);
         tvTip.setText("松手立即加载");
     }
 
     @Override
     public void executeAnim(int mark) {
         switchImg(false);
-        if (mark == STATE_PULL_TO_RELEASE) {
-            startArrowAnim(-180f);
+        if (mark == LoadMoreRecyclerView.STATE_RELEASE_TO_LOAD) {
+            startArrowAnim(0f);
             tvTip.setText("松手立即加载");
-        } else if (mark == STATE_RELEASE_TO_LOADING) {
-            imgArrow.clearAnimation();
-            imgArrow.setRotation(0f);
+        } else if (mark == LoadMoreRecyclerView.STATE_PULLING) {
+            imgArrow.setRotation(-180f);
             tvTip.setText("上拉加载");
         }
     }
@@ -100,6 +100,7 @@ public class DefaultFootViewCreator implements OnLoadMoreFootViewCreator {
         }
         final float fRoration = roration;
         float startRotation = imgArrow.getRotation();
+        LogUtil.i("startArrowAnim");
         ivAnim = ObjectAnimator.ofFloat(startRotation, fRoration).setDuration(rotationDuration);
         ivAnim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
             @Override

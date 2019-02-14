@@ -64,7 +64,8 @@ public class LoadMoreRecyclerView extends RecyclerView {
     private static final long ANIM_TIME = 300;
 
     //用于记录滑动过程中,底部临界动画的触发
-    private int tempState = DefaultFootViewCreator.STATE_PULL_TO_RELEASE;
+    private int lastState = STATE_DEFAULT;
+
     private Handler handler;
     private OnLoadMoreFootViewCreator onLoadMoreFootViewCreator;
 
@@ -155,7 +156,7 @@ public class LoadMoreRecyclerView extends RecyclerView {
                 if (dy < 0) {
                     dy = Math.min(foot_height_max, Math.abs(dy));
                     dy = Math.max(0, Math.abs(dy));
-                    LogUtil.i("LHD 计算dy2 = " + dy + "  downY = " + downY);
+//                    LogUtil.i("LHD 计算dy2 = " + dy + "  downY = " + downY);
                     if (dy < touchSlope) return super.onTouchEvent(e);
                     //滑动footView
                     scollFoot(dy);
@@ -227,7 +228,7 @@ public class LoadMoreRecyclerView extends RecyclerView {
         //dy的高度决定了bottomView的高度，所以不可随意设置
         if (dy < 1) dy = 1;
         if (bottomView != null) {
-            LogUtil.i("LHD 设置bottomView的高度 = " + dy);
+//            LogUtil.i("LHD 设置bottomView的高度 = " + dy);
             bottomLp = bottomView.getLayoutParams();
             bottomLp.height = (int) dy;
             bottomView.setLayoutParams(bottomLp);
@@ -238,18 +239,22 @@ public class LoadMoreRecyclerView extends RecyclerView {
         //dy = loadViewHeight的时候出发临界动画
         //判断实时状态
         int tempDy = (int) dy;
-//        LogUtil.i("LHD scollFoot = " + tempDy);
-        if (tempDy > loadViewHeight) {
-            tempState = DefaultFootViewCreator.STATE_RELEASE_TO_LOADING;
-        } else if (tempDy < loadViewHeight) {
-            tempState = DefaultFootViewCreator.STATE_PULL_TO_RELEASE;
+        if (tempDy >= loadViewHeight) {
+            LogUtil.i("LHD scollFoot = " + tempDy + "    curState = " + curState);
+            curState = STATE_RELEASE_TO_LOAD;
+        } else if (tempDy > 0) {
+            LogUtil.i("LHD scollFoot = " + tempDy + "    curState = " + curState);
+            curState = STATE_PULLING;
+        } else if (tempDy == 0) {
+            curState = STATE_DEFAULT;
         }
-
-        //判断临界点动画
-        if (tempDy == loadViewHeight) {
-            LogUtil.i("LHD 判断临界点动画 = " + dy + "   " + tempState + "   loadViewHeight = " + loadViewHeight + "  tempDy = " + tempDy);
-            onLoadMoreFootViewCreator.executeAnim(tempState);
+        //由于触摸点采集的问题，dy可能直接从100变到102,所以不可以通过 if(tempDy == loadViewHeight)来判断临界点
+        //而应该使用状态的变化来判断临界点
+        if (curState != lastState) {//判断临界点动画
+            LogUtil.i("LHD 判断临界点动画 = " + dy + "   " + curState + "   loadViewHeight = " + loadViewHeight + "  tempDy = " + tempDy);
+            onLoadMoreFootViewCreator.executeAnim(curState);
         }
+        lastState = curState;
     }
 
 
