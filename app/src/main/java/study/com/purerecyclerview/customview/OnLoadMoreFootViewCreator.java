@@ -21,7 +21,12 @@ public interface OnLoadMoreFootViewCreator {
      */
     void releaseToLoadMore(float distance);
 
-    void executeAnim(int mark);
+    /**
+     * 执行临界动画
+     *
+     * @param state 当前状态
+     */
+    void executeAnim(int state);
 
     /**
      * 加载中
@@ -33,7 +38,21 @@ public interface OnLoadMoreFootViewCreator {
      */
     void finishLoading();
 
+    /**
+     * 获取加载更多的View
+     *
+     * @param context
+     * @return
+     */
     View getLoadMoreView(Context context);
+
+    /**
+     * 获取没有更多的View
+     *
+     * @param context
+     * @return
+     */
+    View getNoMoreView(Context context);
 
     //由于自定义的LoadMoreView可能多种多样并且高度不一，
     // 所以我们需要在自定义的recyclerView里进行添加操作
@@ -41,4 +60,6 @@ public interface OnLoadMoreFootViewCreator {
 //    boolean addFootView(Context context, RecyclerView recyclerView);
 
     int getLoadMoreViewHeight(Context context);
+
+    int getNoMoreViewHeight(Context context);
 }

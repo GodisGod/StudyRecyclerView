@@ -3,7 +3,6 @@ package study.com.purerecyclerview.customview;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.Context;
-import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,6 +20,7 @@ import study.com.purerecyclerview.util.LogUtil;
 public class DefaultFootViewCreator implements OnLoadMoreFootViewCreator {
 
     private View loadMoreView;
+    private View noMoreView;
     private ImageView imgArrow;
     private ProgressBar progressBar;
     private TextView tvTip;
@@ -29,13 +29,6 @@ public class DefaultFootViewCreator implements OnLoadMoreFootViewCreator {
     private int loadingDuration = 1000;
     private ValueAnimator ivAnim;
 
-    //mark = false，由上拉加载变为下拉刷新执行动画
-    //mark = true，由下拉刷新变为上拉加载执行动画
-//    private final boolean mark = false;
-//    public final static int STATE_RELEASE_TO_LOADING = 1;//由下拉刷新变为上拉加载执行动画
-//    public final static int STATE_PULL_TO_RELEASE = 2;//由上拉加载变为下拉刷新执行动画
-
-    //STATE_DEFAULT->STATE_PULLING->STATE_RELEASE_TO_LOAD
     @Override
     public void startPull(float distance) {
         switchImg(false);
@@ -53,12 +46,12 @@ public class DefaultFootViewCreator implements OnLoadMoreFootViewCreator {
     }
 
     @Override
-    public void executeAnim(int mark) {
+    public void executeAnim(int state) {
         switchImg(false);
-        if (mark == LoadMoreRecyclerView.STATE_RELEASE_TO_LOAD) {
+        if (state == LoadMoreRecyclerView.STATE_RELEASE_TO_LOAD) {
             startArrowAnim(0f);
             tvTip.setText("松手立即加载");
-        } else if (mark == LoadMoreRecyclerView.STATE_PULLING) {
+        } else if (state == LoadMoreRecyclerView.STATE_PULLING) {
             imgArrow.setRotation(-180f);
             tvTip.setText("上拉加载");
         }
@@ -80,7 +73,7 @@ public class DefaultFootViewCreator implements OnLoadMoreFootViewCreator {
     public View getLoadMoreView(Context context) {
         if (loadMoreView == null) {
             loadMoreView = LayoutInflater.from(context).inflate(R.layout.layout_header, null);
-            loadMoreView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, (int) context.getResources().getDimension(R.dimen.head_height)));
+            loadMoreView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, getLoadMoreViewHeight(context)));
             imgArrow = loadMoreView.findViewById(R.id.header_arrow);
             progressBar = loadMoreView.findViewById(R.id.header_progress);
             tvTip = loadMoreView.findViewById(R.id.header_tv);
@@ -89,8 +82,22 @@ public class DefaultFootViewCreator implements OnLoadMoreFootViewCreator {
     }
 
     @Override
+    public View getNoMoreView(Context context) {
+        if (noMoreView == null) {
+            noMoreView = LayoutInflater.from(context).inflate(R.layout.view_no_more, null);
+            noMoreView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, getNoMoreViewHeight(context)));
+        }
+        return noMoreView;
+    }
+
+    @Override
     public int getLoadMoreViewHeight(Context context) {
         return (int) context.getResources().getDimension(R.dimen.head_height);
+    }
+
+    @Override
+    public int getNoMoreViewHeight(Context context) {
+        return (int) context.getResources().getDimension(R.dimen.no_more_height);
     }
 
     private void startArrowAnim(float roration) {

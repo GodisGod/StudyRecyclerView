@@ -5,6 +5,8 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.SimpleItemAnimator;
+import android.view.View;
+import android.widget.CheckBox;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,6 +22,7 @@ public class TestActivity extends AppCompatActivity {
     private List<String> list;
     private HeadFootRealAdapter headFootRealAdapter;
     private Handler handler;
+    private CheckBox checkBox;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -36,6 +39,7 @@ public class TestActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
         recyclerView.setAdapter(headFootRealAdapter);
         handler = new Handler();
+        checkBox = findViewById(R.id.check_no_more);
 //        recyclerView.getItemAnimator().setChangeDuration(0);//无效
 //        ((SimpleItemAnimator) recyclerView.getItemAnimator()).setSupportsChangeAnimations(false);//无效
 //        recyclerView.setItemAnimator(new NoSnapItemAnimator());
@@ -45,14 +49,20 @@ public class TestActivity extends AppCompatActivity {
                 handler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
-                        for (int i = 0; i < 2; i++) {
-                            list.add("加载更多的数据" + i);
+                        if (checkBox.isChecked()) {
+                            recyclerView.finishLoadMore(0);
+                            recyclerView.setNoMore(checkBox.isChecked());
+                        } else {
+                            for (int i = 0; i < 2; i++) {
+                                list.add("加载更多的数据" + i);
+                            }
+                            recyclerView.finishLoadMore(2);
                         }
-                        recyclerView.finishLoadMore(2);
                     }
                 }, 1000);
             }
         });
+
     }
 
 }
