@@ -10,6 +10,7 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
@@ -29,6 +30,7 @@ import study.com.purerecyclerview.util.LogUtil;
  * 尾部加载更多
  * 1、根据下拉距离动态改变头部高度
  * 2、将布局放到屏幕之外，根据下拉距离滑动到屏幕内部
+ * 本类采用方案2实现，并增加底部悬停功能
  */
 public class PureRefreshLayout3 extends FrameLayout {
 
@@ -88,6 +90,7 @@ public class PureRefreshLayout3 extends FrameLayout {
         foot_height = DisplayUtil.dp2Px(getContext(), FOOT_HEIGHT);
         head_height_max = DisplayUtil.dp2Px(getContext(), HEAD_HEIGHT * 2);
         foot_height_max = DisplayUtil.dp2Px(getContext(), FOOT_HEIGHT * 2);
+        mTouchSlope = ViewConfiguration.get(getContext()).getScaledTouchSlop();
         if (getChildCount() != 1) {
             new IllegalArgumentException("must only one child");
         }
@@ -375,7 +378,7 @@ public class PureRefreshLayout3 extends FrameLayout {
 //                }
                 //使用外部布局嵌套recyclerview的方式原理是通过移动recyclerview的view来进行上拉加载的
                 //所以无法实现无缝加载，必须得回到底部然后再次上拉才能看到新加载的更多数据
-                //所以要实现无缝加载，需要用自定义recyclerview的方式去实现
+                //所以要实现无缝加载，需要用自定义recyclerview的方式去实现,可参考LoadMoreRecyclerView
                 finishAnim(foot_height, State.LOADMORE);
             }
         }

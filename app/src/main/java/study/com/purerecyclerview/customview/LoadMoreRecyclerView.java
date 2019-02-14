@@ -7,12 +7,11 @@ import android.support.annotation.Nullable;
 import android.support.v4.view.ViewCompat;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
-import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 
-import study.com.purerecyclerview.R;
 import study.com.purerecyclerview.freshlayout.adapter.HeadAndFootAdapter;
 import study.com.purerecyclerview.util.LogUtil;
 
@@ -55,6 +54,8 @@ public class LoadMoreRecyclerView extends RecyclerView {
     private boolean isBottom = false;//是否执行动画
     private float ratio = 0.5f;//滑动距离和头部view下拉高度的比率，默认是3
 
+    //滑动的最小距离
+    private int touchSlope;
     private static int foot_height_max;//最大滑动距离
     //回弹动画
     private ValueAnimator anim;
@@ -91,6 +92,7 @@ public class LoadMoreRecyclerView extends RecyclerView {
         //获取loadMoreView的高度
         loadViewHeight = onLoadMoreFootViewCreator.getLoadMoreViewHeight(context);
         foot_height_max = loadViewHeight * 4;
+        touchSlope = ViewConfiguration.get(getContext()).getScaledTouchSlop();
     }
 
     @Override
@@ -148,6 +150,7 @@ public class LoadMoreRecyclerView extends RecyclerView {
                     dy = Math.min(foot_height_max, Math.abs(dy));
                     dy = Math.max(0, Math.abs(dy));
                     LogUtil.i("LHD 计算dy2 = " + dy + "  downY = " + downY);
+                    if (dy < touchSlope) return super.onTouchEvent(e);
                     //滑动footView
                     scollFoot(dy);
                     //当手指先向上滑动再向下滑动的时候,bottomView的高度变化了，当同时recyclerView也在向下位移

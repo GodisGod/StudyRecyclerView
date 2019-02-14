@@ -9,6 +9,7 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
@@ -26,7 +27,7 @@ import study.com.purerecyclerview.util.DisplayUtil;
  * 头部有两个方案
  * 1、根据下拉距离动态改变头部高度，视觉上会有缺陷，适合头部动画是从小到大渐变的头部
  * 2、将布局放到屏幕之外，根据下拉距离滑动到屏幕内部
- * 本类采用方案1实现
+ * 本类采用方案1实现 : 根据下拉距离动态改变头部高度
  */
 public class PureRefreshLayout extends FrameLayout {
 
@@ -83,6 +84,7 @@ public class PureRefreshLayout extends FrameLayout {
         foot_height = DisplayUtil.dp2Px(getContext(), FOOT_HEIGHT);
         head_height_2 = DisplayUtil.dp2Px(getContext(), HEAD_HEIGHT * 2);
         foot_height_2 = DisplayUtil.dp2Px(getContext(), FOOT_HEIGHT * 2);
+        mTouchSlope = ViewConfiguration.get(getContext()).getScaledTouchSlop();
         if (getChildCount() != 1) {
             new IllegalArgumentException("must only one child");
         }
