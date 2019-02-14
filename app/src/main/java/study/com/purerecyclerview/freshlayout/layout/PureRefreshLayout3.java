@@ -248,8 +248,8 @@ public class PureRefreshLayout3 extends FrameLayout {
                                 }
                             });
                         } else {
-                            finishAnim(Math.abs(dy1), State.LOADMORE, true);
-                            footerView.noMore();
+                            finishAnim(Math.abs(dy1), State.LOADMORE, false);
+                            footerView.normal();
                         }
                     }
                 }

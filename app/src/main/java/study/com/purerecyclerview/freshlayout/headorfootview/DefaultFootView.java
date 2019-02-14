@@ -44,6 +44,7 @@ public class DefaultFootView extends FrameLayout implements FooterView {
 
     @Override
     public void progress(float progress, float all) {
+        arrow.setVisibility(VISIBLE);
         if (progress >= all) {
             tvTip.setText("松开加载更多");
             arrow.setRotation(0);
