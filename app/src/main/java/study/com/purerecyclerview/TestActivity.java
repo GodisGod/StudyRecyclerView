@@ -4,6 +4,7 @@ import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.SimpleItemAnimator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,6 +12,7 @@ import java.util.List;
 import study.com.purerecyclerview.customview.OnLoadMoreListener;
 import study.com.purerecyclerview.customview.LoadMoreRecyclerView;
 import study.com.purerecyclerview.headfoot.HeadFootRealAdapter;
+import study.com.purerecyclerview.util.NoSnapItemAnimator;
 
 public class TestActivity extends AppCompatActivity {
 
@@ -34,7 +36,9 @@ public class TestActivity extends AppCompatActivity {
         recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));
         recyclerView.setAdapter(headFootRealAdapter);
         handler = new Handler();
-
+//        recyclerView.getItemAnimator().setChangeDuration(0);//无效
+//        ((SimpleItemAnimator) recyclerView.getItemAnimator()).setSupportsChangeAnimations(false);//无效
+//        recyclerView.setItemAnimator(new NoSnapItemAnimator());
         recyclerView.setOnLoadMoreListener(new OnLoadMoreListener() {
             @Override
             public void loading() {

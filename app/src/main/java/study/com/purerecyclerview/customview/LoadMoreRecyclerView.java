@@ -2,6 +2,7 @@ package study.com.purerecyclerview.customview;
 
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.os.Handler;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.view.ViewCompat;
@@ -64,7 +65,7 @@ public class LoadMoreRecyclerView extends RecyclerView {
 
     //用于记录滑动过程中,底部临界动画的触发
     private int tempState = DefaultFootViewCreator.STATE_PULL_TO_RELEASE;
-
+    private Handler handler;
     private OnLoadMoreFootViewCreator onLoadMoreFootViewCreator;
 
     public LoadMoreRecyclerView(@NonNull Context context) {
@@ -93,6 +94,11 @@ public class LoadMoreRecyclerView extends RecyclerView {
         loadViewHeight = onLoadMoreFootViewCreator.getLoadMoreViewHeight(context);
         foot_height_max = loadViewHeight * 4;
         touchSlope = ViewConfiguration.get(getContext()).getScaledTouchSlop();
+        handler = new Handler();
+        //使用 notifyItemRangeInserted 这个会局部刷新，但是会有闪烁问题导致动画过渡会不流畅，为了解决这个问题，需要设置动画时间为0
+//        getItemAnimator().setChangeDuration(0);//无效
+//        ((SimpleItemAnimator) getItemAnimator()).setSupportsChangeAnimations(false);//无效
+        setItemAnimator(null);//不使用动画
     }
 
     @Override
@@ -297,10 +303,11 @@ public class LoadMoreRecyclerView extends RecyclerView {
      * 结束刷新
      */
     public void finishLoadMore(int newItemSize) {
-        //回到起始位置
-        createAnimatorTranslationY(loadViewHeight, 1);
         int startItem = realAdapter.getItemCount() + headFootAdapter.getHeadCount() - newItemSize;
+//        headFootAdapter.notifyDataSetChanged();//使用这个会全部刷新,动画流畅但是会消耗性能
+        //使用这个会局部刷新，但是会有默认的增加动画导致动画过渡会不流畅，为了解决这个问题，需要取消动画setItemAnimator(null);
         headFootAdapter.notifyItemRangeInserted(startItem, newItemSize);
+        createAnimatorTranslationY(loadViewHeight, 1);
     }
 
     private OnLoadMoreListener onLoadMoreListener;
