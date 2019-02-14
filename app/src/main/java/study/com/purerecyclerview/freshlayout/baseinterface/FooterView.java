@@ -29,6 +29,8 @@ public interface FooterView {
      */
     void normal();
 
+    void noMore();
+
     View getView();
 
 }

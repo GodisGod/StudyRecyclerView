@@ -77,6 +77,11 @@ public class LoadMoreView extends FrameLayout implements FooterView {
     }
 
     @Override
+    public void noMore() {
+        tvTip.setText("没有更多了");
+    }
+
+    @Override
     public View getView() {
         return this;
     }

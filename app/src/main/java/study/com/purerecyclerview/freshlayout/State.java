@@ -5,10 +5,6 @@ import android.support.annotation.IntDef;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 
-/**
- * Created by jiang on 16/8/17.
- */
-
 public class State {
 
 

@@ -73,6 +73,13 @@ public class DefaultFootView extends FrameLayout implements FooterView {
     }
 
     @Override
+    public void noMore() {
+        arrow.setVisibility(GONE);
+        progressBar.setVisibility(GONE);
+        tvTip.setText("没有更多了");
+    }
+
+    @Override
     public View getView() {
         return this;
     }
