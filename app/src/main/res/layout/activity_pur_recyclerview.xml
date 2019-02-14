@@ -17,7 +17,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
         android:layout_marginBottom="50dp"
-        android:text="有更多数据"
+        android:text="没有有更多了"
         android:textSize="20sp" />
 
 </study.com.purerecyclerview.freshlayout.layout.PureRefreshLayout3>
