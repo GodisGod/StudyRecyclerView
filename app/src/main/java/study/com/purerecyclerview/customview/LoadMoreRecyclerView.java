@@ -264,6 +264,12 @@ public class LoadMoreRecyclerView extends RecyclerView {
      *              start - end = loadMoreView露出高度的变化值
      */
     public void createAnimatorTranslationY(final int start, final int end) {
+        //正在执行动画不处理
+        if (anim != null && anim.isRunning()) {
+            anim.end();
+            anim.cancel();
+            anim = null;
+        }
         anim = ValueAnimator.ofInt(start, end);
         anim.setDuration(ANIM_TIME);
         anim.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
