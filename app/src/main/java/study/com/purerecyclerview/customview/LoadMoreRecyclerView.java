@@ -65,7 +65,7 @@ public class LoadMoreRecyclerView extends RecyclerView {
     //回弹动画
     private ValueAnimator anim;
     //动画时间长度
-    private static final long ANIM_TIME = 300;
+    private static final long ANIM_TIME = 200;
 
     //上一状态：用于记录滑动过程中,底部临界动画的触发
     private int lastState = STATE_DEFAULT;
