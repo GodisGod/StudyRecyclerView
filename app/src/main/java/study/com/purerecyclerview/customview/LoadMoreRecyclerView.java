@@ -7,7 +7,6 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.view.ViewCompat;
 import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
@@ -25,7 +24,7 @@ import study.com.purerecyclerview.util.LogUtil;
  * 而应该为了实现某一个定制化的需求变得最精简
  * 所有和底部ViEW有关的逻辑操作要尽量封装到View内部，自定义View只进行框架层面的操作
  */
-public class LoadMoreRecyclerView extends RecyclerView {
+public class LoadMoreRecyclerView extends RefreshRecyclerView {
 
     //默认状态
     private int curState = STATE_DEFAULT;
@@ -94,8 +93,6 @@ public class LoadMoreRecyclerView extends RecyclerView {
         loadMoreView = onLoadMoreFootViewCreator.getLoadMoreView(context, this);
         noMoreView = onLoadMoreFootViewCreator.getNoMoreView(context, this);
 
-        noMoreViewHeight = onLoadMoreFootViewCreator.getNoMoreViewHeight(context);
-
         //构建bottomView，无需开放给自定义footCreator
         bottomView = new View(context);
         ViewGroup.LayoutParams layoutParams = new LayoutParams(LayoutParams.MATCH_PARENT, 1);
@@ -110,7 +107,6 @@ public class LoadMoreRecyclerView extends RecyclerView {
 
     @Override
     public void setAdapter(@Nullable Adapter adapter) {
-        LogUtil.i("recyclerView setAdapter");
         realAdapter = adapter;
         loadMoreFootAdapter = new LoadMoreFootAdapter(realAdapter);
         super.setAdapter(loadMoreFootAdapter);
@@ -121,7 +117,7 @@ public class LoadMoreRecyclerView extends RecyclerView {
     @Override
     protected void onMeasure(int widthSpec, int heightSpec) {
         super.onMeasure(widthSpec, heightSpec);
-        LogUtil.i("recyclerView onMeasure 此方法执行顺序在setAdapter之后");
+//        LogUtil.i("recyclerView onMeasure 此方法执行顺序在setAdapter之后");
         if (loadMoreView != null && loadViewHeight == 0) {
             loadMoreView.measure(0, 0);
             loadViewHeight = loadMoreView.getLayoutParams().height;
@@ -136,22 +132,22 @@ public class LoadMoreRecyclerView extends RecyclerView {
     @Override
     public void onDraw(Canvas c) {
         super.onDraw(c);
-        if (loadMoreView == null) return;
-        if (getAdapter() == null) return;
-        LogUtil.i("LHD  getChildCount = " + getChildCount() + "   getAdapter().getItemCount() = " + getAdapter().getItemCount());
-        if (getChildCount() >= getAdapter().getItemCount()) {//recyclerView持有View数量>=真实数据数量，说明数据不满一屏
-            if (loadMoreView.getVisibility() != GONE) {
-                loadMoreView.setVisibility(GONE);
-                curState = STATE_DEFAULT;
-                scollFoot(1);
-            }
-        } else {
-            if (loadMoreView.getVisibility() != VISIBLE) {
-                loadMoreView.setVisibility(VISIBLE);
-                curState = STATE_DEFAULT;
-                scollFoot(1);
-            }
-        }
+//        if (loadMoreView == null) return;
+//        if (getAdapter() == null) return;
+//        LogUtil.i("LHD  getChildCount = " + getChildCount() + "   getAdapter().getItemCount() = " + getAdapter().getItemCount());
+//        if (getChildCount() >= getAdapter().getItemCount()) {//recyclerView持有View数量>=真实数据数量，说明数据不满一屏
+//            if (loadMoreView.getVisibility() != GONE) {
+//                loadMoreView.setVisibility(GONE);
+//                curState = STATE_DEFAULT;
+//                scollFoot(1);
+//            }
+//        } else {
+//            if (loadMoreView.getVisibility() != VISIBLE) {
+//                loadMoreView.setVisibility(VISIBLE);
+//                curState = STATE_DEFAULT;
+//                scollFoot(1);
+//            }
+//        }
     }
 
     @Override
@@ -170,11 +166,10 @@ public class LoadMoreRecyclerView extends RecyclerView {
 
         if (loadMoreView.getVisibility() != VISIBLE) return super.onTouchEvent(e);
 
-        LogUtil.i("摁下时候的状态 curState = " + curState);
+//        LogUtil.i("摁下时候的状态 curState = " + curState);
         switch (e.getAction()) {
             case MotionEvent.ACTION_DOWN:
                 curState = STATE_DEFAULT;
-                LogUtil.i("LHD  MotionEvent.ACTION_DOWN " + isBottom());
                 isBottom = isBottom();//记录是否处理抬起的手势
                 if (isBottom) {//如果沒有滑动到底部不处理
                     downY = e.getRawY();
@@ -185,7 +180,7 @@ public class LoadMoreRecyclerView extends RecyclerView {
             case MotionEvent.ACTION_MOVE:
                 if (!isBottom) return super.onTouchEvent(e);
                 float dy = (e.getRawY() - downY) * ratio;
-                LogUtil.i("LHD 计算dy1 = " + dy + "   curState = " + curState + "   downY = " + downY);
+//                LogUtil.i("LHD 计算dy1 = " + dy + "   curState = " + curState + "   downY = " + downY);
                 if (dy < 0) {
                     dy = Math.min(foot_height_max, Math.abs(dy));
                     dy = Math.max(0, Math.abs(dy));
@@ -201,12 +196,12 @@ public class LoadMoreRecyclerView extends RecyclerView {
             case MotionEvent.ACTION_CANCEL:
             case MotionEvent.ACTION_UP:
                 //如果不是滑动到底部的抬起动作，则不处理
-                LogUtil.i("LHD  MotionEvent.ACTION_UP + " + isBottom);
+//                LogUtil.i("LHD  MotionEvent.ACTION_UP + " + isBottom);
                 if (isBottom) {
                     float dy2 = (e.getRawY() - downY) * ratio;
                     if (dy2 > 0) break;//如果是滑动到底部以后，再往上滑动，则不处理
                     distance = Math.abs(dy2);
-                    LogUtil.i("LHD 计算dy3 = " + distance);
+//                    LogUtil.i("LHD 计算dy3 = " + distance);
                     startAction(distance);
                 }
                 break;
@@ -221,7 +216,7 @@ public class LoadMoreRecyclerView extends RecyclerView {
      * @param footHeight loadViewHeight不可为0
      *                   footHeight = 0 的时候是 STATE_DEFAULT
      *                   0 < footHeight < loadViewHeight 的时候是 STATE_PULLING
-     *                   footHeight > loadViewHeight       的时候是 STATE_RELEASE_TO_LOAD
+     *                   footHeight > loadViewHeight       的时候是 STATE_RELEASE_TO_REFRESH
      * @return 返回当前状态
      */
     private int checkState(float footHeight) {
@@ -246,7 +241,7 @@ public class LoadMoreRecyclerView extends RecyclerView {
      * 状态2：触发刷新，上拉->结束刷新
      */
     private void startAction(float distance) {
-        LogUtil.i("LHD startAction = " + curState);
+//        LogUtil.i("LHD startAction = " + curState);
         checkState(distance);
         if (curState == STATE_PULLING) {   //回到起始位置，pull->default
             createAnimatorTranslationY((int) distance, 1);
@@ -300,7 +295,7 @@ public class LoadMoreRecyclerView extends RecyclerView {
      * @param end   bottomView的结束高度为1,该view的高度不能为0，否则将无法判断是否已滑动到底部
      *              start - end = loadMoreView露出高度的变化值
      */
-    public void createAnimatorTranslationY(final int start, final int end) {
+    private void createAnimatorTranslationY(final int start, final int end) {
         //正在执行动画不处理
         if (anim != null && anim.isRunning()) {
             anim.end();
@@ -313,7 +308,7 @@ public class LoadMoreRecyclerView extends RecyclerView {
             @Override
             public void onAnimationUpdate(ValueAnimator valueAnimator) {
                 int value = (int) valueAnimator.getAnimatedValue();
-//                LogUtil.i("LHD 正在执行回弹动画 = " + value + "   state = " + curState + "  start = " + start + "  end = " + end);
+//                LogUtil.i("LoadMore 正在执行回弹动画 = " + value + "   state = " + curState + "  start = " + start + "  end = " + end);
                 value = Math.max(1, value);
                 scollFoot(value);
                 if (value == end) {
@@ -344,27 +339,32 @@ public class LoadMoreRecyclerView extends RecyclerView {
 
     public void setNoMore(boolean noMore) {
         curState = noMore ? STATE_NO_MORE : STATE_DEFAULT;
-        LogUtil.i("setNoMore noMore = " + noMore + "  curState = " + curState + "   noMoreViewHeight = " + noMoreViewHeight + "   bottomView高度 = " + bottomView.getLayoutParams().height);
         if (noMoreView == null) return;
-        if (bottomView != null) {
-            LogUtil.i("LHD 沒有更多数据了，设置bottomView的高度 = " + noMoreViewHeight);
-            bottomLp = bottomView.getLayoutParams();
-            bottomLp.height = noMoreViewHeight;
-            bottomView.setLayoutParams(bottomLp);
-        }
         ViewGroup.MarginLayoutParams marginLayoutParams = (ViewGroup.MarginLayoutParams) getLayoutParams();
         if (noMore) {
             loadMoreFootAdapter.setLoadView(noMoreView);
-            LogUtil.i(">>>>>没有更多了 改变底部View");
-//            重新测量底部
+            //重新测量底部
+            noMoreView.measure(0, 0);
+            noMoreViewHeight = noMoreView.getLayoutParams().height;
+//            LogUtil.i(">>>>>没有更多了 改变底部View  = " + noMoreViewHeight);
             marginLayoutParams.setMargins(marginLayoutParams.leftMargin, marginLayoutParams.topMargin, marginLayoutParams.rightMargin, -noMoreViewHeight - 1);
         } else {
-            loadMoreFootAdapter.setLoadView(loadMoreView);
-            LogUtil.i("有更多数据 改变底部View");
-            //重新测量底部
-            marginLayoutParams.setMargins(marginLayoutParams.leftMargin, marginLayoutParams.topMargin, marginLayoutParams.rightMargin, -loadViewHeight - 1);
+            if (loadMoreView != null) {
+                loadMoreFootAdapter.setLoadView(loadMoreView);
+//                LogUtil.i("有更多数据 改变底部View");
+                marginLayoutParams.setMargins(marginLayoutParams.leftMargin, marginLayoutParams.topMargin, marginLayoutParams.rightMargin, -loadViewHeight - 1);
+
+            }
         }
         setLayoutParams(marginLayoutParams);
+
+//        LogUtil.i("setNoMore noMore = " + noMore + "  curState = " + curState + "   noMoreViewHeight = " + noMoreViewHeight + "   bottomView高度 = " + bottomView.getLayoutParams().height);
+        if (bottomView != null) {
+            bottomLp = bottomView.getLayoutParams();
+            bottomLp.height = noMore ? noMoreViewHeight : 1;//bottom的高度不能为0，否则将无法判断是否滑动到底部
+            LogUtil.i("LHD 沒有更多数据了，设置bottomView的高度 noMoreViewHeight = " + noMoreViewHeight + "   bottomLp.height = " + bottomLp.height);
+            bottomView.setLayoutParams(bottomLp);
+        }
     }
 
     private OnLoadMoreListener onLoadMoreListener;

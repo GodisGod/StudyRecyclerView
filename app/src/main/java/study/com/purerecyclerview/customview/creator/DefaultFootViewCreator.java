@@ -87,19 +87,8 @@ public class DefaultFootViewCreator implements OnLoadMoreFootViewCreator {
     public View getNoMoreView(Context context, RecyclerView recyclerView) {
         if (noMoreView == null) {
             noMoreView = LayoutInflater.from(context).inflate(R.layout.view_no_more, recyclerView, false);
-            noMoreView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, getNoMoreViewHeight(context)));
         }
         return noMoreView;
-    }
-
-//    @Override
-//    public int getLoadMoreViewHeight(Context context) {
-//        return (int) context.getResources().getDimension(R.dimen.head_height);
-//    }
-
-    @Override
-    public int getNoMoreViewHeight(Context context) {
-        return (int) context.getResources().getDimension(R.dimen.no_more_height);
     }
 
     private void startArrowAnim(float roration) {

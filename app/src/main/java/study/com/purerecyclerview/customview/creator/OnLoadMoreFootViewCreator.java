@@ -60,7 +60,4 @@ public interface OnLoadMoreFootViewCreator {
     //这样只让自定义的LoadMoreView负责构建View即可
 //    boolean addFootView(Context context, RecyclerView recyclerView);
 
-
-    int getNoMoreViewHeight(Context context);
-
 }

@@ -1,5 +1,6 @@
 package study.com.purerecyclerview.test;
 
+import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -23,6 +24,7 @@ public class TestActivity2 extends AppCompatActivity {
     private List<String> list;
     private Button btnAddOne;
     private Button btnDeleteOne;
+    private Handler handler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,19 +42,20 @@ public class TestActivity2 extends AppCompatActivity {
         adapter = new TestAdapter(list);
         recyclerView.setLayoutManager(new LinearLayoutManager(this));
         recyclerView.setAdapter(adapter);
-
+        handler = new Handler();
         recyclerView.setOnRefreshListener(new OnRefreshListener() {
             @Override
-            public void refresh() {
-                btnAddOne.postDelayed(new Runnable() {
+            public void refreshLoding() {
+                LogUtil.i(">>>>>>>>>>>>>>>>>>recyclerView.setOnRefreshListener>>>>>>>>>>>>>>>>>>>>>>");
+                handler.postDelayed(new Runnable() {
                     @Override
                     public void run() {
+                        LogUtil.i("finishRefresh 結束刷新");
                         recyclerView.finishRefresh();
                     }
                 }, 1000);
             }
         });
-
         btnAddOne.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
