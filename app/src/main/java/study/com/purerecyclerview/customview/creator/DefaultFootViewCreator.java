@@ -1,8 +1,9 @@
-package study.com.purerecyclerview.customview;
+package study.com.purerecyclerview.customview.creator;
 
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -11,6 +12,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import study.com.purerecyclerview.R;
+import study.com.purerecyclerview.customview.LoadMoreRecyclerView;
 import study.com.purerecyclerview.util.LogUtil;
 
 /**
@@ -26,7 +28,6 @@ public class DefaultFootViewCreator implements OnLoadMoreFootViewCreator {
     private TextView tvTip;
 
     private int rotationDuration = 200;
-    private int loadingDuration = 1000;
     private ValueAnimator ivAnim;
 
     @Override
@@ -70,10 +71,11 @@ public class DefaultFootViewCreator implements OnLoadMoreFootViewCreator {
     }
 
     @Override
-    public View getLoadMoreView(Context context) {
+    public View getLoadMoreView(Context context, RecyclerView recyclerView) {
         if (loadMoreView == null) {
-            loadMoreView = LayoutInflater.from(context).inflate(R.layout.layout_header, null);
-            loadMoreView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, getLoadMoreViewHeight(context)));
+            //传入recyclerView之前必须已经设置了setLayoutManager,否则将inflater失败
+            // 报错：Caused by: java.lang.IllegalStateException: RecyclerView has no LayoutManager study.com.purerecyclerview.customview.LoadMoreRecyclerView
+            loadMoreView = LayoutInflater.from(context).inflate(R.layout.layout_header, recyclerView, false);
             imgArrow = loadMoreView.findViewById(R.id.header_arrow);
             progressBar = loadMoreView.findViewById(R.id.header_progress);
             tvTip = loadMoreView.findViewById(R.id.header_tv);
@@ -82,18 +84,18 @@ public class DefaultFootViewCreator implements OnLoadMoreFootViewCreator {
     }
 
     @Override
-    public View getNoMoreView(Context context) {
+    public View getNoMoreView(Context context, RecyclerView recyclerView) {
         if (noMoreView == null) {
-            noMoreView = LayoutInflater.from(context).inflate(R.layout.view_no_more, null);
+            noMoreView = LayoutInflater.from(context).inflate(R.layout.view_no_more, recyclerView, false);
             noMoreView.setLayoutParams(new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, getNoMoreViewHeight(context)));
         }
         return noMoreView;
     }
 
-    @Override
-    public int getLoadMoreViewHeight(Context context) {
-        return (int) context.getResources().getDimension(R.dimen.head_height);
-    }
+//    @Override
+//    public int getLoadMoreViewHeight(Context context) {
+//        return (int) context.getResources().getDimension(R.dimen.head_height);
+//    }
 
     @Override
     public int getNoMoreViewHeight(Context context) {
@@ -126,4 +128,5 @@ public class DefaultFootViewCreator implements OnLoadMoreFootViewCreator {
         imgArrow.setVisibility(isLoading ? View.GONE : View.VISIBLE);
         progressBar.setVisibility(isLoading ? View.VISIBLE : View.GONE);
     }
+
 }

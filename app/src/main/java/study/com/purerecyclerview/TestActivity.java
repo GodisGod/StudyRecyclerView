@@ -4,17 +4,15 @@ import android.os.Handler;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
-import android.support.v7.widget.SimpleItemAnimator;
 import android.view.View;
 import android.widget.CheckBox;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import study.com.purerecyclerview.customview.OnLoadMoreListener;
+import study.com.purerecyclerview.customview.interfaces.OnLoadMoreListener;
 import study.com.purerecyclerview.customview.LoadMoreRecyclerView;
 import study.com.purerecyclerview.headfoot.HeadFootRealAdapter;
-import study.com.purerecyclerview.util.NoSnapItemAnimator;
 
 public class TestActivity extends AppCompatActivity {
 
@@ -30,9 +28,18 @@ public class TestActivity extends AppCompatActivity {
         setContentView(R.layout.activity_test);
         list = new ArrayList<>();
 
-        for (int i = 0; i < 4; i++) {
+        for (int i = 0; i < 1; i++) {
             list.add("PullToRefreshLayout" + i);
         }
+
+        findViewById(R.id.btn_add_data).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                list.add("增加数据");
+//                headFootRealAdapter.notifyDataSetChanged();
+                recyclerView.getAdapter().notifyDataSetChanged();
+            }
+        });
 
         headFootRealAdapter = new HeadFootRealAdapter(list);
         recyclerView = findViewById(R.id.recycler_test2);

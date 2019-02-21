@@ -7,6 +7,7 @@ import android.view.View;
 
 import study.com.purerecyclerview.activity.Layout1Activity;
 import study.com.purerecyclerview.activity.Layout2Activity;
+import study.com.purerecyclerview.test.TestActivity2;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -43,6 +44,12 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 startActivity(new Intent(MainActivity.this, TestAddHeadAndFootActivity.class));
+            }
+        });
+        findViewById(R.id.test_2).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                startActivity(new Intent(MainActivity.this, TestActivity2.class));
             }
         });
     }

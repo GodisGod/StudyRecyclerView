@@ -19,4 +19,13 @@
         android:layout_marginBottom="100dp"
         android:text="没有更多了" />
 
+    <Button
+        android:id="@+id/btn_add_data"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="left|top"
+        android:layout_marginLeft="50dp"
+        android:layout_marginTop="100dp"
+        android:text="增加数据" />
+
 </FrameLayout>

@@ -2,9 +2,11 @@ package study.com.purerecyclerview.customview;
 
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.graphics.Canvas;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.view.ViewCompat;
+import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
@@ -12,6 +14,9 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 
+import study.com.purerecyclerview.customview.creator.DefaultFootViewCreator;
+import study.com.purerecyclerview.customview.creator.OnLoadMoreFootViewCreator;
+import study.com.purerecyclerview.customview.interfaces.OnLoadMoreListener;
 import study.com.purerecyclerview.util.LogUtil;
 
 /**
@@ -34,8 +39,6 @@ public class LoadMoreRecyclerView extends RecyclerView {
     public final static int STATE_LOADING = 3;
     //     没有更多
     public final static int STATE_NO_MORE = 4;
-
-    private float mLoadRatio = 0.5f;
 
     private LoadMoreFootAdapter loadMoreFootAdapter;
     private Adapter realAdapter;
@@ -84,14 +87,14 @@ public class LoadMoreRecyclerView extends RecyclerView {
     }
 
     private void init(Context context) {
+        // 设置默认LayoutManager
+        setLayoutManager(new LinearLayoutManager(context, LinearLayoutManager.VERTICAL, false));
         onLoadMoreFootViewCreator = new DefaultFootViewCreator();
         //获取底部的view
-        loadMoreView = onLoadMoreFootViewCreator.getLoadMoreView(context);
-        noMoreView = onLoadMoreFootViewCreator.getNoMoreView(context);
-        //获取loadMoreView的高度
-        loadViewHeight = onLoadMoreFootViewCreator.getLoadMoreViewHeight(context);
+        loadMoreView = onLoadMoreFootViewCreator.getLoadMoreView(context, this);
+        noMoreView = onLoadMoreFootViewCreator.getNoMoreView(context, this);
+
         noMoreViewHeight = onLoadMoreFootViewCreator.getNoMoreViewHeight(context);
-        foot_height_max = loadViewHeight * 4;
 
         //构建bottomView，无需开放给自定义footCreator
         bottomView = new View(context);
@@ -107,15 +110,48 @@ public class LoadMoreRecyclerView extends RecyclerView {
 
     @Override
     public void setAdapter(@Nullable Adapter adapter) {
+        LogUtil.i("recyclerView setAdapter");
         realAdapter = adapter;
         loadMoreFootAdapter = new LoadMoreFootAdapter(realAdapter);
         super.setAdapter(loadMoreFootAdapter);
         loadMoreFootAdapter.setLoadView(loadMoreView);
         loadMoreFootAdapter.setBottomView(bottomView);
-        //初始化loadView的位置，将view置于界面之外
-        ViewGroup.MarginLayoutParams marginLayoutParams = (ViewGroup.MarginLayoutParams) getLayoutParams();
-        marginLayoutParams.setMargins(marginLayoutParams.leftMargin, marginLayoutParams.topMargin, marginLayoutParams.rightMargin, marginLayoutParams.bottomMargin - loadViewHeight - 1);
-        setLayoutParams(marginLayoutParams);
+    }
+
+    @Override
+    protected void onMeasure(int widthSpec, int heightSpec) {
+        super.onMeasure(widthSpec, heightSpec);
+        LogUtil.i("recyclerView onMeasure 此方法执行顺序在setAdapter之后");
+        if (loadMoreView != null && loadViewHeight == 0) {
+            loadMoreView.measure(0, 0);
+            loadViewHeight = loadMoreView.getLayoutParams().height;
+            foot_height_max = loadViewHeight * 4;
+            //初始化loadView的位置，将view置于界面之外
+            ViewGroup.MarginLayoutParams marginLayoutParams = (ViewGroup.MarginLayoutParams) getLayoutParams();
+            marginLayoutParams.setMargins(marginLayoutParams.leftMargin, marginLayoutParams.topMargin, marginLayoutParams.rightMargin, marginLayoutParams.bottomMargin - loadViewHeight - 1);
+            setLayoutParams(marginLayoutParams);
+        }
+    }
+
+    @Override
+    public void onDraw(Canvas c) {
+        super.onDraw(c);
+        if (loadMoreView == null) return;
+        if (getAdapter() == null) return;
+        LogUtil.i("LHD  getChildCount = " + getChildCount() + "   getAdapter().getItemCount() = " + getAdapter().getItemCount());
+        if (getChildCount() >= getAdapter().getItemCount()) {//recyclerView持有View数量>=真实数据数量，说明数据不满一屏
+            if (loadMoreView.getVisibility() != GONE) {
+                loadMoreView.setVisibility(GONE);
+                curState = STATE_DEFAULT;
+                scollFoot(1);
+            }
+        } else {
+            if (loadMoreView.getVisibility() != VISIBLE) {
+                loadMoreView.setVisibility(VISIBLE);
+                curState = STATE_DEFAULT;
+                scollFoot(1);
+            }
+        }
     }
 
     @Override
@@ -131,6 +167,8 @@ public class LoadMoreRecyclerView extends RecyclerView {
         }
         //没有更多数据不处理
         if (curState == STATE_NO_MORE) return super.onTouchEvent(e);
+
+        if (loadMoreView.getVisibility() != VISIBLE) return super.onTouchEvent(e);
 
         LogUtil.i("摁下时候的状态 curState = " + curState);
         switch (e.getAction()) {
@@ -247,7 +285,6 @@ public class LoadMoreRecyclerView extends RecyclerView {
         //记录状态
         lastState = curState;
     }
-
 
     /**
      * 判断是否滑动到底部

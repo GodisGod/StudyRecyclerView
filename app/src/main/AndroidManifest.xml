@@ -11,9 +11,7 @@
         android:theme="@style/AppTheme">
         <activity android:name=".PurRecyclerviewActivity" />
         <activity android:name=".TestAddHeadAndFootActivity" />
-        <activity android:name=".TestActivity">
-
-        </activity>
+        <activity android:name=".TestActivity"></activity>
         <activity android:name=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -21,8 +19,9 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".activity.Layout1Activity"></activity>
-        <activity android:name=".activity.Layout2Activity"></activity>
+        <activity android:name=".activity.Layout1Activity" />
+        <activity android:name=".activity.Layout2Activity" />
+        <activity android:name=".test.TestActivity2"></activity>
     </application>
 
 </manifest>

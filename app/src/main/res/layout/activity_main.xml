@@ -36,4 +36,10 @@
         android:layout_height="50dp"
         android:text="custom loadMore" />
 
+    <Button
+        android:id="@+id/test_2"
+        android:layout_width="match_parent"
+        android:layout_height="50dp"
+        android:text="测试recyclerView的一些属性" />
+
 </LinearLayout>
