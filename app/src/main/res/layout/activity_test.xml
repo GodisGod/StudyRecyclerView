@@ -28,4 +28,12 @@
         android:layout_marginTop="100dp"
         android:text="增加数据" />
 
+    <Button
+        android:id="@+id/btn_delete_data"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="left|top"
+        android:layout_marginLeft="50dp"
+        android:layout_marginTop="160dp"
+        android:text="删除数据" />
 </FrameLayout>

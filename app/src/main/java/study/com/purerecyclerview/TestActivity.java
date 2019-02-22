@@ -43,7 +43,14 @@ public class TestActivity extends AppCompatActivity {
                 recyclerView.getAdapter().notifyDataSetChanged();
             }
         });
-
+        findViewById(R.id.btn_delete_data).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                list.remove(list.size() - 1);
+//                headFootRealAdapter.notifyDataSetChanged();
+                recyclerView.getAdapter().notifyDataSetChanged();
+            }
+        });
         headFootRealAdapter = new HeadFootRealAdapter(list);
         recyclerView = findViewById(R.id.recycler_test2);
         recyclerView.setLayoutManager(new LinearLayoutManager(this, LinearLayoutManager.VERTICAL, false));

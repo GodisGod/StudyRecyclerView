@@ -21,6 +21,7 @@ import study.com.purerecyclerview.customview.creator.DefaultFootViewCreator;
 import study.com.purerecyclerview.customview.creator.OnLoadMoreFootViewCreator;
 import study.com.purerecyclerview.customview.interfaces.OnLoadMoreListener;
 import study.com.purerecyclerview.util.LogUtil;
+import study.com.purerecyclerview.util.Utils;
 
 /**
  * Created by  HONGDA on 2019/1/10.
@@ -136,35 +137,30 @@ public class LoadMoreRecyclerView extends RefreshRecyclerView {
     @Override
     public void onDraw(Canvas c) {
         super.onDraw(c);
-//        if (loadMoreView == null) return;
-//        if (getAdapter() == null) return;
-//        LogUtil.i("LHD  getChildCount = " + getChildCount() + "   getAdapter().getItemCount() = " + getAdapter().getItemCount());
-//        if (getChildCount() >= getAdapter().getItemCount()) {//recyclerView持有View数量>=真实数据数量，说明数据不满一屏
-//            if (loadMoreView.getVisibility() != GONE) {
-//                loadMoreView.setVisibility(GONE);
-//                curState = STATE_DEFAULT;
-//                scollFoot(1);
-//            }
-//        } else {
-//            if (loadMoreView.getVisibility() != VISIBLE) {
-//                loadMoreView.setVisibility(VISIBLE);
-//                curState = STATE_DEFAULT;
-//                scollFoot(1);
-//            }
-//        }
+        if (loadMoreView == null) return;
+        if (getAdapter() == null) return;
+        boolean isFull = checkIsFullScreen();
+        LogUtil.i(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>isFull = " + isFull);
+        if (!isFull) {//recyclerView持有View数量>=真实数据数量，说明数据不满一屏
+            if (loadMoreView.getVisibility() != GONE) {
+                loadMoreView.setVisibility(GONE);
+                curState = STATE_DEFAULT;
+                scollFoot(1);
+                getAdapter().notifyDataSetChanged();
+            }
+        } else {
+            if (loadMoreView.getVisibility() != VISIBLE) {
+                loadMoreView.setVisibility(VISIBLE);
+                curState = STATE_DEFAULT;
+                scollFoot(1);
+                getAdapter().notifyDataSetChanged();
+            }
+        }
 
     }
 
-    private void checkIsFullScreen() {
-        RecyclerView.LayoutManager layoutManager = getLayoutManager();
-        if (layoutManager instanceof LinearLayoutManager) {
-            LinearLayoutManager linearLayoutManager = (LinearLayoutManager) layoutManager;
-            linearLayoutManager.findLastVisibleItemPosition();
-        } else if (layoutManager instanceof GridLayoutManager) {
-            GridLayoutManager gridLayoutManager = (GridLayoutManager) layoutManager;
-        } else {
-            StaggeredGridLayoutManager staggeredGridLayoutManager = (StaggeredGridLayoutManager) layoutManager;
-        }
+    private boolean checkIsFullScreen() {
+        return Utils.isRecyclerViewFullscreen(this, loadMoreFootAdapter.getHeadCount());
     }
 
     @Override
