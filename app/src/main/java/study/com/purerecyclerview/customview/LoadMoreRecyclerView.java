@@ -6,12 +6,16 @@ import android.graphics.Canvas;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.view.ViewCompat;
+import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.StaggeredGridLayoutManager;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
+import android.widget.LinearLayout;
 
 import study.com.purerecyclerview.customview.creator.DefaultFootViewCreator;
 import study.com.purerecyclerview.customview.creator.OnLoadMoreFootViewCreator;
@@ -148,6 +152,19 @@ public class LoadMoreRecyclerView extends RefreshRecyclerView {
 //                scollFoot(1);
 //            }
 //        }
+
+    }
+
+    private void checkIsFullScreen() {
+        RecyclerView.LayoutManager layoutManager = getLayoutManager();
+        if (layoutManager instanceof LinearLayoutManager) {
+            LinearLayoutManager linearLayoutManager = (LinearLayoutManager) layoutManager;
+            linearLayoutManager.findLastVisibleItemPosition();
+        } else if (layoutManager instanceof GridLayoutManager) {
+            GridLayoutManager gridLayoutManager = (GridLayoutManager) layoutManager;
+        } else {
+            StaggeredGridLayoutManager staggeredGridLayoutManager = (StaggeredGridLayoutManager) layoutManager;
+        }
     }
 
     @Override

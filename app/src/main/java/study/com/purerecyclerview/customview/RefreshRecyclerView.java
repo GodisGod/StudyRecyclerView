@@ -306,4 +306,9 @@ public class RefreshRecyclerView extends RecyclerView {
     public void setOnRefreshListener(OnRefreshListener onRefreshListener) {
         this.refreshListener = onRefreshListener;
     }
+
+    public int getHeightCount() {
+        return headAndFootAdapter.getHeadCount();
+    }
+
 }
