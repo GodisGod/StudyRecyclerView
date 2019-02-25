@@ -10,6 +10,7 @@ import android.widget.Button;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import study.com.purerecyclerview.R;
 import study.com.purerecyclerview.customview.RefreshRecyclerView;
@@ -72,8 +73,6 @@ public class TestActivity2 extends AppCompatActivity {
                 //RecyclerView does what is indicated by its name. It recycles views. Say you have a list of 1000 entries but at any given time 3-4 of them are shown on the screen. RecyclerView's adapter always holds all of those children so calling recyclerView.getAdapter().getItemCount(); will return a 1000.
                 //However RecyclerView only holds some of the items which are shown and are "close" to being shown so recyclerView.getChildCount() will return a smaller and not-constant value. For most applications you should then use the method provided by the adapter.
                 boolean isFull = Utils.isRecyclerViewFullscreen(recyclerView, recyclerView.getHeightCount());
-
-                LogUtil.i("是否全屏 isFull = " + isFull);
             }
         });
         btnDeleteOne.setOnClickListener(new View.OnClickListener() {
@@ -88,6 +87,7 @@ public class TestActivity2 extends AppCompatActivity {
                 LogUtil.i("是否全屏 isFull = " + isFull);
             }
         });
+
     }
 
 }

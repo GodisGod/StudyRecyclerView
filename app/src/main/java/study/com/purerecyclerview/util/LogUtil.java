@@ -9,4 +9,7 @@ public class LogUtil {
     public static void i(String log) {
         Log.i("LHD", log);
     }
+    public static void e(String log) {
+        Log.i("LHD", log);
+    }
 }
